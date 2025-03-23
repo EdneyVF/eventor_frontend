@@ -6,6 +6,8 @@ import { useAuth } from './hooks/useAuth';
 import AuthPage from './pages/AuthPage';
 import HomePage from './pages/HomePage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import AdminCategoriesPage from './pages/AdminCategoriesPage';
+import AdminUsersPage from './pages/AdminUsersPage';
 import Layout from './components/layout/Layout';
 
 // Tema personalizado
@@ -99,6 +101,30 @@ function AppWithProviders() {
             element={
               <ProtectedAdminRoute>
                 <AdminDashboardPage />
+              </ProtectedAdminRoute>
+            } 
+          />
+          <Route 
+            path="/admin/events" 
+            element={
+              <ProtectedAdminRoute>
+                <AdminDashboardPage />
+              </ProtectedAdminRoute>
+            } 
+          />
+          <Route 
+            path="/admin/categories" 
+            element={
+              <ProtectedAdminRoute>
+                <AdminCategoriesPage />
+              </ProtectedAdminRoute>
+            } 
+          />
+          <Route 
+            path="/admin/users" 
+            element={
+              <ProtectedAdminRoute>
+                <AdminUsersPage />
               </ProtectedAdminRoute>
             } 
           />

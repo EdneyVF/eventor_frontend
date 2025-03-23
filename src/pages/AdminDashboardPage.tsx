@@ -42,6 +42,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useEvents } from '../hooks/useEvents';
+import AdminNavigation from '../components/admin/AdminNavigation';
 
 const AdminDashboardPage: React.FC = () => {
   const { authState } = useAuth();
@@ -284,9 +285,11 @@ const AdminDashboardPage: React.FC = () => {
           Dashboard Administrativo
         </Typography>
         <Typography variant="body1" color="text.secondary" paragraph>
-          Gerencie os eventos da plataforma Eventor. Aprove, rejeite ou edite eventos conforme necessário.
+          Gerencie os eventos, usuários e categorias da plataforma Eventor.
         </Typography>
       </Paper>
+
+      <AdminNavigation />
 
       <Paper sx={{ p: 3, mb: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
