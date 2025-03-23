@@ -32,7 +32,8 @@ import {
   MoreVert as MoreVertIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Add as AddIcon
+  Add as AddIcon,
+  BarChart as BarChartIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -48,11 +49,14 @@ const AdminCategoriesPage: React.FC = () => {
   // Usar o hook de categorias
   const { 
     categories, 
+    categoryStats,
     loading, 
+    error, 
     fetchCategories, 
     createCategory, 
     updateCategory, 
-    deleteCategory 
+    deleteCategory,
+    fetchCategoryStats 
   } = useCategories();
   
   // Estado para busca
@@ -62,6 +66,7 @@ const AdminCategoriesPage: React.FC = () => {
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [openStatsDialog, setOpenStatsDialog] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   
   // Estado para formulários
@@ -281,6 +286,239 @@ const AdminCategoriesPage: React.FC = () => {
       <Chip size="small" label="Inativa" color="error" />;
   };
 
+  const handleOpenStatsDialog = async () => {
+    if (selectedCategoryId) {
+      try {
+        await fetchCategoryStats(selectedCategoryId);
+        setOpenStatsDialog(true);
+      } catch (err) {
+        setSnackbar({
+          open: true,
+          message: err instanceof Error ? err.message : 'Erro ao buscar estatísticas da categoria',
+          severity: 'error'
+        });
+      }
+    }
+    handleMenuClose();
+  };
+
+  const handleCloseStatsDialog = () => {
+    setOpenStatsDialog(false);
+  };
+
+  // Renderização de componentes para estatísticas de categoria
+  const renderEventsByStatus = (stats: typeof categoryStats) => {
+    if (!stats) return null;
+    
+    return (
+      <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
+        <Table size="small">
+          <TableHead>
+            <TableRow sx={{ backgroundColor: 'primary.light' }}>
+              <TableCell sx={{ fontWeight: 'bold', color: 'primary.contrastText' }}>Status</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 'bold', color: 'primary.contrastText' }}>Quantidade</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            <TableRow sx={{ bgcolor: 'background.paper' }}>
+              <TableCell component="th" scope="row">Ativos</TableCell>
+              <TableCell align="center">
+                <Chip 
+                  label={stats.eventsByStatus.ativo} 
+                  color="success" 
+                  size="small" 
+                  sx={{ minWidth: '60px' }}
+                />
+              </TableCell>
+            </TableRow>
+            <TableRow sx={{ bgcolor: 'action.hover' }}>
+              <TableCell component="th" scope="row">Cancelados</TableCell>
+              <TableCell align="center">
+                <Chip 
+                  label={stats.eventsByStatus.cancelado} 
+                  color="error" 
+                  size="small" 
+                  sx={{ minWidth: '60px' }}
+                />
+              </TableCell>
+            </TableRow>
+            <TableRow sx={{ bgcolor: 'background.paper' }}>
+              <TableCell component="th" scope="row">Finalizados</TableCell>
+              <TableCell align="center">
+                <Chip 
+                  label={stats.eventsByStatus.finalizado} 
+                  color="info" 
+                  size="small" 
+                  sx={{ minWidth: '60px' }}
+                />
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+  };
+
+  const renderCategoryStatsSummary = (stats: typeof categoryStats) => {
+    if (!stats) return null;
+    
+    return (
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        gap: 2, 
+        flexWrap: 'wrap',
+        mt: 3,
+        mb: 3
+      }}>
+        <Paper 
+          elevation={0} 
+          variant="outlined" 
+          sx={{ 
+            flex: 1, 
+            p: 2, 
+            minWidth: { xs: '100%', sm: '45%', md: '30%' }, 
+            textAlign: 'center',
+            bgcolor: 'primary.light',
+            color: 'primary.contrastText',
+            borderRadius: 2
+          }}
+        >
+          <Typography variant="h4" component="div" fontWeight="bold">
+            {stats.eventsCount}
+          </Typography>
+          <Typography variant="body2">
+            Total de Eventos
+          </Typography>
+        </Paper>
+        
+        <Paper 
+          elevation={0} 
+          variant="outlined" 
+          sx={{ 
+            flex: 1, 
+            p: 2, 
+            minWidth: { xs: '100%', sm: '45%', md: '30%' }, 
+            textAlign: 'center',
+            bgcolor: 'secondary.light',
+            color: 'secondary.contrastText',
+            borderRadius: 2
+          }}
+        >
+          <Typography variant="h4" component="div" fontWeight="bold">
+            {stats.totalParticipants}
+          </Typography>
+          <Typography variant="body2">
+            Total de Participantes
+          </Typography>
+        </Paper>
+        
+        <Paper 
+          elevation={0} 
+          variant="outlined" 
+          sx={{ 
+            flex: 1, 
+            p: 2, 
+            minWidth: { xs: '100%', sm: '45%', md: '30%' }, 
+            textAlign: 'center',
+            bgcolor: 'info.light',
+            color: 'info.contrastText',
+            borderRadius: 2
+          }}
+        >
+          <Typography variant="h4" component="div" fontWeight="bold">
+            {stats.avgParticipantsPerEvent.toFixed(1)}
+          </Typography>
+          <Typography variant="body2">
+            Média por Evento
+          </Typography>
+        </Paper>
+      </Box>
+    );
+  };
+
+  const renderEventsDistribution = (stats: typeof categoryStats) => {
+    if (!stats) return null;
+    
+    // Calcular os percentuais
+    const total = stats.eventsCount;
+    const activePercent = total > 0 ? Math.round((stats.eventsByStatus.ativo / total) * 100) : 0;
+    const canceledPercent = total > 0 ? Math.round((stats.eventsByStatus.cancelado / total) * 100) : 0;
+    const finishedPercent = total > 0 ? Math.round((stats.eventsByStatus.finalizado / total) * 100) : 0;
+    
+    return (
+      <Box sx={{ 
+        borderRadius: 2, 
+        p: 3, 
+        bgcolor: 'background.paper', 
+        boxShadow: 1, 
+        border: '1px solid',
+        borderColor: 'divider',
+        mt: { xs: 3, md: 0 },
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        <Typography variant="subtitle1" gutterBottom>
+          Distribuição de Eventos
+        </Typography>
+        
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="body2" gutterBottom>
+            Ativos ({activePercent}%)
+          </Typography>
+          <Box sx={{ height: 8, bgcolor: 'grey.300', borderRadius: 4, mb: 2, position: 'relative' }}>
+            <Box 
+              sx={{ 
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                height: '100%',
+                width: `${activePercent}%`,
+                bgcolor: 'success.main',
+                borderRadius: 4
+              }}
+            />
+          </Box>
+          
+          <Typography variant="body2" gutterBottom>
+            Cancelados ({canceledPercent}%)
+          </Typography>
+          <Box sx={{ height: 8, bgcolor: 'grey.300', borderRadius: 4, mb: 2, position: 'relative' }}>
+            <Box 
+              sx={{ 
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                height: '100%',
+                width: `${canceledPercent}%`,
+                bgcolor: 'error.main',
+                borderRadius: 4
+              }}
+            />
+          </Box>
+          
+          <Typography variant="body2" gutterBottom>
+            Finalizados ({finishedPercent}%)
+          </Typography>
+          <Box sx={{ height: 8, bgcolor: 'grey.300', borderRadius: 4, mb: 2, position: 'relative' }}>
+            <Box 
+              sx={{ 
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                height: '100%',
+                width: `${finishedPercent}%`,
+                bgcolor: 'info.main',
+                borderRadius: 4
+              }}
+            />
+          </Box>
+        </Box>
+      </Box>
+    );
+  };
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Paper sx={{ p: 3, mb: 3 }}>
@@ -331,6 +569,10 @@ const AdminCategoriesPage: React.FC = () => {
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
             <CircularProgress />
           </Box>
+        ) : error ? (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
         ) : (
           <TableContainer>
             <Table size="small">
@@ -380,6 +622,10 @@ const AdminCategoriesPage: React.FC = () => {
           <MenuItem onClick={handleOpenEditDialog}>
             <EditIcon fontSize="small" sx={{ mr: 1 }} />
             Editar
+          </MenuItem>
+          <MenuItem onClick={handleOpenStatsDialog}>
+            <BarChartIcon fontSize="small" sx={{ mr: 1 }} />
+            Estatísticas
           </MenuItem>
           <MenuItem onClick={handleOpenDeleteDialog} sx={{ color: 'error.main' }}>
             <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
@@ -504,6 +750,45 @@ const AdminCategoriesPage: React.FC = () => {
             </Button>
             <Button onClick={handleDeleteCategory} color="error">
               Excluir
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Diálogo para estatísticas da categoria */}
+        <Dialog open={openStatsDialog} onClose={handleCloseStatsDialog} maxWidth="md" fullWidth>
+          <DialogTitle>Estatísticas da Categoria</DialogTitle>
+          <DialogContent>
+            {categoryStats ? (
+              <Box sx={{ pt: 2 }}>
+                {/* Cards de resumo no topo */}
+                {renderCategoryStatsSummary(categoryStats)}
+                
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="subtitle1" gutterBottom>
+                      Status dos Eventos
+                    </Typography>
+                    {renderEventsByStatus(categoryStats)}
+                  </Box>
+                  
+                  <Box sx={{ flex: 1 }}>
+                    {renderEventsDistribution(categoryStats)}
+                  </Box>
+                </Box>
+                
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 3, textAlign: 'right' }}>
+                  Estatísticas atualizadas em: {new Date().toLocaleString('pt-BR')}
+                </Typography>
+              </Box>
+            ) : (
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                <CircularProgress />
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseStatsDialog} color="primary" variant="contained">
+              Fechar
             </Button>
           </DialogActions>
         </Dialog>

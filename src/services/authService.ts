@@ -2,11 +2,11 @@ import api from './api';
 import { LoginCredentials, RegisterData, User } from '../types/auth';
 
 const AUTH_ROUTES = {
-  login: '/auth/login',
-  register: '/auth/register',
-  me: '/auth/me',
-  updateProfile: '/auth/profile',
-  updatePassword: '/auth/password',
+  login: '/api/auth/login',
+  register: '/api/auth/register',
+  me: '/api/auth/me',
+  updateProfile: '/api/auth/profile',
+  updatePassword: '/api/auth/password',
 };
 
 // Login de usuário

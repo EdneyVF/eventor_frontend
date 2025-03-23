@@ -14,6 +14,18 @@ export interface UserStats {
   eventsParticipating: number;
   activeEvents: number;
   canceledEvents: number;
+  participantsStats: {
+    totalParticipants: number;
+    avgParticipantsPerEvent: number;
+    participantsByCategory: Array<{
+      name: string;
+      count: number;
+    }>;
+  };
+  eventsByMonth: Array<{
+    date: string;
+    count: number;
+  }>;
 }
 
 export interface User {

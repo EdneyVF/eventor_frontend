@@ -12,10 +12,14 @@ const AuthPage: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
 
-  // Redirecionar se usuário já estiver logado
+  // Redirecionar após login com base no papel do usuário
   useEffect(() => {
     if (user) {
-      navigate('/');
+      if (user.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     }
   }, [user, navigate]);
 

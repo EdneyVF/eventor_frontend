@@ -9,15 +9,28 @@ import {
 interface UseCategoriesState {
   categories: Category[];
   category: Category | null;
+  categoryStats: CategoryStats | null;
   loading: boolean;
   error: string | null;
   success: boolean;
+}
+
+export interface CategoryStats {
+  eventsCount: number;
+  totalParticipants: number;
+  avgParticipantsPerEvent: number;
+  eventsByStatus: {
+    ativo: number;
+    cancelado: number;
+    finalizado: number;
+  };
 }
 
 export const useCategories = () => {
   const [state, setState] = useState<UseCategoriesState>({
     categories: [],
     category: null,
+    categoryStats: null,
     loading: false,
     error: null,
     success: false
@@ -151,6 +164,7 @@ export const useCategories = () => {
     setState({
       categories: [],
       category: null,
+      categoryStats: null,
       loading: false,
       error: null,
       success: false
@@ -162,14 +176,43 @@ export const useCategories = () => {
     setState(prev => ({ ...prev, error: null }));
   }, []);
 
+  // Fetch category statistics by id
+  const fetchCategoryStats = useCallback(async (id: string) => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    try {
+      const stats = await categoryService.getCategoryStats(id);
+      setState(prev => ({ 
+        ...prev, 
+        categoryStats: stats,
+        loading: false 
+      }));
+      return stats;
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Falha ao carregar estatísticas da categoria',
+        loading: false
+      }));
+      throw error;
+    }
+  }, []);
+
   return {
-    ...state,
+    categories: state.categories,
+    category: state.category,
+    categoryStats: state.categoryStats,
+    loading: state.loading,
+    error: state.error,
+    success: state.success,
     fetchCategories,
     fetchCategoryById,
     createCategory,
     updateCategory,
     deleteCategory,
     clearState,
-    clearError
+    clearError,
+    fetchCategoryStats
   };
-}; 
+};
+
+export default useCategories; 

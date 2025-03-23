@@ -1,4 +1,5 @@
 import api from './api';
+import { CategoryStats } from '../hooks/useCategories';
 
 const CATEGORY_ROUTES = {
   list: '/api/categories',
@@ -6,6 +7,7 @@ const CATEGORY_ROUTES = {
   create: '/api/categories',
   update: (id: string) => `/api/categories/${id}`,
   delete: (id: string) => `/api/categories/${id}`,
+  stats: (id: string) => `/api/categories/${id}/stats`
 };
 
 // Interfaces
@@ -53,4 +55,9 @@ export const updateCategory = async (id: string, categoryData: CategoryUpdateDat
 export const deleteCategory = async (id: string) => {
   const response = await api.delete(CATEGORY_ROUTES.delete(id));
   return response.data;
+};
+
+export const getCategoryStats = async (id: string): Promise<CategoryStats> => {
+  const response = await api.get(CATEGORY_ROUTES.stats(id));
+  return response.data.stats;
 }; 
