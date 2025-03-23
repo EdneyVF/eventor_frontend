@@ -3,7 +3,8 @@ import axios from 'axios';
 // Determinando a URL base do backend
 // Em desenvolvimento, usamos o proxy do Vite para evitar problemas de CORS
 // Em produção, deve ser configurado de acordo com o ambiente
-const baseURL = import.meta.env.DEV ? '/api' : import.meta.env.VITE_API_URL || '/api';
+const local_url = 'http://localhost:3001/api/';
+const baseURL = import.meta.env.DEV ? local_url : import.meta.env.VITE_API_URL;
 
 // Criar instância do Axios
 const api = axios.create({

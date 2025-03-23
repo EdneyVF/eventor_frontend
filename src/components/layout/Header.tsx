@@ -10,9 +10,10 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  Typography
+  Typography,
+  Tooltip
 } from '@mui/material';
-import { Menu as MenuIcon } from '@mui/icons-material';
+import { Menu as MenuIcon, Dashboard as DashboardIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import logoSvg from '../../assets/icons/logo.png';
@@ -125,6 +126,20 @@ const Header: React.FC = () => {
             <Box sx={{ display: 'flex', gap: { xs: 1, sm: 2 } }}>
               {user ? (
                 <>
+                  {user.role === 'admin' && (
+                    <Tooltip title="Painel Administrativo">
+                      <Button 
+                        color="primary" 
+                        variant="outlined"
+                        startIcon={<DashboardIcon />}
+                        onClick={() => navigate('/admin')}
+                        size="small"
+                        sx={{ fontSize: { xs: '0.85rem', sm: '0.9rem' } }}
+                      >
+                        Admin
+                      </Button>
+                    </Tooltip>
+                  )}
                   <Button 
                     color="primary" 
                     onClick={() => navigate('/events')}
@@ -207,6 +222,12 @@ const Header: React.FC = () => {
               >
                 {user ? (
                   <>
+                    {user.role === 'admin' && (
+                      <MenuItem onClick={() => { navigate('/admin'); handleClose(); }}>
+                        <DashboardIcon fontSize="small" sx={{ mr: 1 }} />
+                        Painel Administrativo
+                      </MenuItem>
+                    )}
                     <MenuItem onClick={() => { navigate('/events'); handleClose(); }}>
                       Meus Eventos
                     </MenuItem>
