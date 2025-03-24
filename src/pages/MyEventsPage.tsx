@@ -5,14 +5,10 @@ import {
   Box, 
   Paper,
   Grid,
-  Card,
-  CardContent,
-  CardMedia,
   Chip,
   Button,
   Tab,
   Tabs,
-  Divider,
   CircularProgress,
   Alert,
   Dialog,
@@ -28,17 +24,12 @@ import {
 } from '@mui/material';
 import {
   Event as EventIcon,
-  LocationOn as LocationIcon,
-  Edit as EditIcon,
-  EventAvailable as EventAvailableIcon,
-  Person as PersonIcon,
-  AttachMoney as AttachMoneyIcon,
-  Cancel as CancelIcon
+  EventAvailable as EventAvailableIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useEvents } from '../hooks/useEvents';
 import { Event, EventQueryParams } from '../services/eventService';
-import defaultEventImage from '../assets/images/default-event.svg';
+import EventCard from '../components/common/EventCard';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -150,32 +141,6 @@ const MyEventsPage: React.FC = () => {
         });
     }
   }, [tabValue, page, limit, statusFilter, fetchMyEvents]);
-
-  // Formatar data para exibição
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
-  };
-
-  // Formatar preço
-  const formatPrice = (price: number) => {
-    if (price === 0) return 'Gratuito';
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(price);
-  };
-
-  // Formatar localização
-  const formatLocation = (location: { city: string; state: string }) => {
-    return `${location.city}, ${location.state}`;
-  };
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -349,148 +314,6 @@ const MyEventsPage: React.FC = () => {
     );
   };
 
-  // Renderizar card de evento
-  const renderEventCard = (event: Event) => (
-    <Card key={event._id} sx={{ 
-      height: '100%', 
-      display: 'flex', 
-      flexDirection: 'column',
-      opacity: event.status === 'cancelado' ? 0.7 : 1
-    }}>
-      <Box sx={{ position: 'relative' }}>
-        <CardMedia
-          component="img"
-          height="180"
-          image={event.imageUrl || defaultEventImage}
-          alt={event.title}
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.src = defaultEventImage;
-          }}
-        />
-        {event.status === 'cancelado' && (
-          <Box sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <Chip 
-              label="CANCELADO" 
-              color="error" 
-              sx={{ fontWeight: 'bold', fontSize: '1rem' }}
-            />
-          </Box>
-        )}
-      </Box>
-      <CardContent sx={{ flexGrow: 1 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-          <Typography variant="h6" component="h2" gutterBottom sx={{ fontWeight: 'bold' }}>
-            {event.title}
-          </Typography>
-          <Chip 
-            label={event.category.name} 
-            size="small" 
-            color="primary" 
-            sx={{ ml: 1 }}
-          />
-        </Box>
-        <Typography variant="body2" color="text.secondary" paragraph>
-          {event.description.length > 120 
-            ? `${event.description.substring(0, 120)}...` 
-            : event.description}
-        </Typography>
-
-        <Divider sx={{ mb: 2 }} />
-        
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <EventIcon color="action" fontSize="small" sx={{ mr: 1 }} />
-          <Typography variant="body2" color="text.secondary">
-            {formatDate(event.date)}
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <LocationIcon color="action" fontSize="small" sx={{ mr: 1 }} />
-          <Typography variant="body2" color="text.secondary">
-            {formatLocation(event.location)}
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <PersonIcon color="action" fontSize="small" sx={{ mr: 1 }} />
-          <Typography variant="body2" color="text.secondary">
-            {event.participantsCount || 0}/{event.capacity} participantes
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <AttachMoneyIcon color="action" fontSize="small" sx={{ mr: 1 }} />
-          <Typography variant="body2" color={event.price === 0 ? "success.main" : "text.secondary"} fontWeight={event.price === 0 ? "bold" : "normal"}>
-            {formatPrice(event.price)}
-          </Typography>
-        </Box>
-        
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Chip 
-              label={`${event.approvalStatus === 'approved' ? 'Aprovado' : 
-                     event.approvalStatus === 'rejected' ? 'Rejeitado' : 'Pendente'}`} 
-              size="small" 
-              color={event.approvalStatus === 'approved' ? "success" : 
-                     event.approvalStatus === 'rejected' ? "error" : "warning"} 
-              variant="outlined"
-            />
-            <Chip 
-              label={event.status === 'ativo' ? 'Ativo' :
-                     event.status === 'inativo' ? 'Inativo' :
-                     event.status === 'cancelado' ? 'Cancelado' : 'Finalizado'}
-              size="small"
-              color={event.status === 'ativo' ? "success" :
-                     event.status === 'inativo' ? "warning" :
-                     event.status === 'cancelado' ? "error" : "secondary"}
-              variant="outlined"
-            />
-          </Box>
-          <Box>
-            {event.status !== 'cancelado' && event.approvalStatus === 'approved' && (
-              <>
-                <Button 
-                  size="small" 
-                  color="primary" 
-                  onClick={() => handleEditEvent(event._id)}
-                  startIcon={<EditIcon />}
-                >
-                  Editar
-                </Button>
-                <Button 
-                  size="small" 
-                  color="error" 
-                  onClick={() => handleCancelEvent(event._id)}
-                  startIcon={<CancelIcon />}
-                  sx={{ ml: 1 }}
-                >
-                  Cancelar
-                </Button>
-              </>
-            )}
-          </Box>
-        </Box>
-      </CardContent>
-      <Box sx={{ p: 2, pt: 0 }}>
-        <Button 
-          variant="outlined" 
-          color="primary" 
-          onClick={() => navigate(`/events/${event._id}`)}
-          fullWidth
-        >
-          Ver Detalhes
-        </Button>
-      </Box>
-    </Card>
-  );
-
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Alerta de sucesso ou erro */}
@@ -562,13 +385,23 @@ const MyEventsPage: React.FC = () => {
             </Alert>
           ) : createdEvents.length > 0 ? (
             <>
-              <Grid container spacing={3}>
-                {createdEvents.map((event) => renderEventCard(event))}
+              <Grid container spacing={4}>
+                {createdEvents.map((event) => (
+                  <Grid item xs={12} sm={6} md={4} key={event._id}>
+                    <EventCard
+                      event={event}
+                      showEditButton={true}
+                      showCancelButton={true}
+                      onEdit={handleEditEvent}
+                      onCancel={handleCancelEvent}
+                    />
+                  </Grid>
+                ))}
               </Grid>
               
               {/* Paginação */}
               {pagination?.pages > 1 && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
                   <Pagination 
                     count={pagination.pages} 
                     page={page} 
@@ -613,13 +446,21 @@ const MyEventsPage: React.FC = () => {
             </Alert>
           ) : participatingEvents.length > 0 ? (
             <>
-              <Grid container spacing={3}>
-                {participatingEvents.map((event) => renderEventCard(event))}
+              <Grid container spacing={4}>
+                {participatingEvents.map((event) => (
+                  <Grid item xs={12} sm={6} md={4} key={event._id}>
+                    <EventCard
+                      event={event}
+                      showCancelParticipationButton={true}
+                      onCancelParticipation={handleCancelEvent}
+                    />
+                  </Grid>
+                ))}
               </Grid>
               
               {/* Paginação */}
               {pagination?.pages > 1 && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
                   <Pagination 
                     count={pagination.pages} 
                     page={page} 

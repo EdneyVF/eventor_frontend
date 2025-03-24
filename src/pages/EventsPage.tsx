@@ -5,14 +5,10 @@ import {
   Box, 
   Paper,
   Grid,
-  Card,
-  CardContent,
-  CardMedia,
   Chip,
   Button,
   TextField,
   InputAdornment,
-  Divider,
   CircularProgress,
   FormControl,
   InputLabel,
@@ -28,15 +24,12 @@ import {
 import {
   Search as SearchIcon,
   Event as EventIcon,
-  LocationOn as LocationIcon,
-  Person as PersonIcon,
-  AttachMoney as AttachMoneyIcon
+  LocationOn as LocationIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useEvents } from '../hooks/useEvents';
 import { useCategories } from '../hooks/useCategories';
-import { EventLocation } from '../services/eventService';
-import defaultEventImage from '../assets/images/default-event.svg';
+import EventCard from '../components/common/EventCard';
 
 interface EventParams {
   page?: number;
@@ -59,10 +52,10 @@ const EventsPage: React.FC = () => {
     events, 
     loading, 
     error, 
-    pagination, 
-    fetchEvents 
+    pagination,
+    fetchEvents
   } = useEvents();
-  
+
   // Hook para categorias
   const { 
     categories, 
@@ -79,6 +72,9 @@ const EventsPage: React.FC = () => {
   const [freeOnly, setFreeOnly] = useState(false);
   const [hasAvailability, setHasAvailability] = useState(false);
   const [location, setLocation] = useState('');
+
+  // Alerta para mensagens de sucesso/erro
+  const [alert, setAlert] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
   // Carregar categorias e eventos ao montar o componente
   useEffect(() => {
@@ -120,6 +116,10 @@ const EventsPage: React.FC = () => {
         await fetchEvents(params);
       } catch (err) {
         console.error('Erro ao carregar eventos:', err);
+        setAlert({
+          type: 'error',
+          message: err instanceof Error ? err.message : 'Erro ao carregar eventos'
+        });
       }
     };
     
@@ -181,35 +181,19 @@ const EventsPage: React.FC = () => {
     setPage(1);
   };
 
-  // Formatar data para exibição
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
-  };
-
-  // Formatar preço
-  const formatPrice = (price: number) => {
-    if (price === 0) return 'Gratuito';
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(price);
-  };
-
-  // Formatar localização para exibição
-  const formatLocation = (location: EventLocation) => {
-    if (!location) return 'Local não definido';
-    return `${location.city}, ${location.state}`;
-  };
-
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
+      {/* Alerta de sucesso ou erro */}
+      {alert && (
+        <Alert 
+          severity={alert.type} 
+          sx={{ mb: 3 }}
+          onClose={() => setAlert(null)}
+        >
+          {alert.message}
+        </Alert>
+      )}
+
       {/* Cabeçalho da página */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Typography variant="h4" component="h1" gutterBottom color="primary" fontWeight="bold">
@@ -306,7 +290,7 @@ const EventsPage: React.FC = () => {
               </Select>
             </FormControl>
           </Box>
-
+          
           {/* Switches para filtros adicionais */}
           <Box sx={{ 
             display: 'flex', 
@@ -372,93 +356,7 @@ const EventsPage: React.FC = () => {
           <Grid container spacing={3}>
             {events.map((event) => (
               <Grid item xs={12} sm={6} md={4} key={event._id}>
-                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                  <Box sx={{ position: 'relative' }}>
-                    <CardMedia
-                      component="img"
-                      height="140"
-                      image={event.imageUrl || defaultEventImage}
-                      alt={event.title}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = defaultEventImage;
-                      }}
-                    />
-                    {(event.status === 'cancelado' || event.status === 'inativo') && (
-                      <Box sx={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        bgcolor: 'rgba(0, 0, 0, 0.5)'
-                      }}>
-                        <Chip 
-                          label={event.status === 'cancelado' ? 'CANCELADO' : 'INATIVO'} 
-                          color={event.status === 'cancelado' ? "error" : "warning"} 
-                          sx={{ fontWeight: 'bold', fontSize: '1rem' }}
-                        />
-                      </Box>
-                    )}
-                  </Box>
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
-                        {event.title}
-                      </Typography>
-                      <Chip 
-                        label={event.category.name} 
-                        size="small" 
-                        color="primary" 
-                        sx={{ ml: 1 }}
-                      />
-                    </Box>
-
-                    <Typography variant="body2" color="text.secondary" paragraph>
-                      {event.description}
-                    </Typography>
-
-                    <Divider sx={{ mb: 2 }} />
-                    
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <EventIcon color="action" fontSize="small" sx={{ mr: 1 }} />
-                      <Typography variant="body2" color="text.secondary">
-                        {formatDate(event.date)}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <LocationIcon color="action" fontSize="small" sx={{ mr: 1 }} />
-                      <Typography variant="body2" color="text.secondary">
-                        {formatLocation(event.location)}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <PersonIcon color="action" fontSize="small" sx={{ mr: 1 }} />
-                      <Typography variant="body2" color="text.secondary">
-                        {event.participantsCount}/{event.capacity} participantes
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <AttachMoneyIcon color="action" fontSize="small" sx={{ mr: 1 }} />
-                      <Typography variant="body2" color={event.price === 0 ? "success.main" : "text.secondary"} fontWeight={event.price === 0 ? "bold" : "normal"}>
-                        {formatPrice(event.price)}
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                  <Box sx={{ p: 2, pt: 0 }}>
-                    <Button 
-                      variant="contained" 
-                      color="primary" 
-                      fullWidth
-                      onClick={() => navigate(`/events/${event._id}`)}
-                    >
-                      Ver Detalhes
-                    </Button>
-                  </Box>
-                </Card>
+                <EventCard event={event} />
               </Grid>
             ))}
           </Grid>
@@ -468,9 +366,9 @@ const EventsPage: React.FC = () => {
             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
               <Pagination 
                 count={pagination.pages} 
-                page={page}
-                onChange={handlePageChange}
-                color="primary"
+                page={page} 
+                onChange={handlePageChange} 
+                color="primary" 
                 showFirstButton
                 showLastButton
               />
