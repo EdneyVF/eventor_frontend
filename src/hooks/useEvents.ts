@@ -3,7 +3,8 @@ import * as eventService from '../services/eventService';
 import { 
   Event, 
   EventCreateData, 
-  EventUpdateData 
+  EventUpdateData,
+  EventQueryParams
 } from '../services/eventService';
 
 interface UseEventsState {
@@ -17,18 +18,21 @@ interface UseEventsState {
     pages: number;
     total: number;
   };
-}
-
-interface EventParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  categories?: string;
-  status?: string;
-  from?: string;
-  to?: string;
-  sort?: string;
-  approvalStatus?: string;
+  counts: {
+    // Para eventos criados pelo usuário
+    total?: number;
+    active?: number;
+    inactive?: number;
+    canceled?: number;
+    finished?: number;
+    pending?: number;
+    approved?: number;
+    rejected?: number;
+    
+    // Para eventos que o usuário participa
+    upcoming?: number;
+    past?: number;
+  };
 }
 
 export const useEvents = () => {
@@ -42,11 +46,12 @@ export const useEvents = () => {
       page: 1,
       pages: 1,
       total: 0
-    }
+    },
+    counts: {}
   });
 
   // Buscar lista de eventos
-  const fetchEvents = useCallback(async (params: EventParams = {}) => {
+  const fetchEvents = useCallback(async (params: EventQueryParams = {}) => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
       const response = await eventService.getEvents(params);
@@ -123,17 +128,17 @@ export const useEvents = () => {
   }, []);
 
   // Criar evento
-  const createEvent = useCallback(async (eventData: EventCreateData) => {
+  const createEvent = useCallback(async (data: EventCreateData) => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
-      const event = await eventService.createEvent(eventData);
+      const response = await eventService.createEvent(data);
       setState(prev => ({
         ...prev,
-        event,
         loading: false,
-        success: true
+        success: true,
+        events: [response.event, ...prev.events]
       }));
-      return event;
+      return response;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao criar evento';
       setState(prev => ({
@@ -147,19 +152,23 @@ export const useEvents = () => {
   }, []);
 
   // Atualizar evento
-  const updateEvent = useCallback(async (id: string, eventData: EventUpdateData) => {
+  const updateEvent = useCallback(async (id: string, data: EventUpdateData) => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
-      const event = await eventService.updateEvent(id, eventData);
+      const result = await eventService.updateEvent(id, data);
       setState(prev => ({
         ...prev,
-        event,
         loading: false,
         success: true,
-        // Atualizar o evento na lista se ele estiver nela
-        events: prev.events.map(e => e._id === id ? event : e)
+        // Atualizar o status do evento na lista
+        events: prev.events.map(e => 
+          e._id === id ? { ...e, ...result, approvalStatus: 'pending', status: 'inativo' } : e
+        ),
+        event: prev.event?._id === id 
+          ? { ...prev.event, ...result, approvalStatus: 'pending', status: 'inativo' } 
+          : prev.event
       }));
-      return event;
+      return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao atualizar evento';
       setState(prev => ({
@@ -209,10 +218,10 @@ export const useEvents = () => {
         success: true,
         // Atualizar o status do evento na lista
         events: prev.events.map(e => 
-          e._id === id ? { ...e, approvalStatus: 'approved' } : e
+          e._id === id ? { ...e, approvalStatus: 'approved', status: 'ativo' } : e
         ),
         event: prev.event?._id === id 
-          ? { ...prev.event, approvalStatus: 'approved' } 
+          ? { ...prev.event, approvalStatus: 'approved', status: 'ativo' } 
           : prev.event
       }));
       return result;
@@ -239,15 +248,157 @@ export const useEvents = () => {
         success: true,
         // Atualizar o status do evento na lista
         events: prev.events.map(e => 
-          e._id === id ? { ...e, approvalStatus: 'rejected' } : e
+          e._id === id ? { ...e, approvalStatus: 'rejected', status: 'inativo' } : e
         ),
         event: prev.event?._id === id 
-          ? { ...prev.event, approvalStatus: 'rejected' } 
+          ? { ...prev.event, approvalStatus: 'rejected', status: 'inativo' } 
           : prev.event
       }));
       return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao rejeitar evento';
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: errorMessage,
+        success: false
+      }));
+      throw error;
+    }
+  }, []);
+
+  // Buscar eventos criados pelo usuário
+  const fetchMyEvents = useCallback(async (params: EventQueryParams = {}) => {
+    try {
+      setState(prev => ({ ...prev, loading: true, error: null }));
+      const response = await eventService.getMyEvents(params);
+      setState(prev => ({
+        ...prev,
+        events: response.events,
+        loading: false,
+        success: true,
+        pagination: {
+          page: response.page,
+          pages: response.pages,
+          total: response.total
+        },
+        counts: response.counts || {}
+      }));
+      return response.events;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao buscar meus eventos';
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: errorMessage,
+        success: false
+      }));
+      throw error;
+    }
+  }, []);
+
+  // Buscar eventos que o usuário está participando
+  const fetchParticipatingEvents = useCallback(async (params: EventQueryParams = {}) => {
+    try {
+      setState(prev => ({ ...prev, loading: true, error: null }));
+      const response = await eventService.getParticipatingEvents(params);
+      setState(prev => ({
+        ...prev,
+        events: response.events,
+        loading: false,
+        success: true,
+        pagination: {
+          page: response.page,
+          pages: response.pages,
+          total: response.total
+        },
+        counts: response.counts || {}
+      }));
+      return response.events;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao buscar eventos que estou participando';
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: errorMessage,
+        success: false
+      }));
+      throw error;
+    }
+  }, []);
+
+  // Cancelar participação em um evento
+  const cancelEventParticipation = useCallback(async (id: string) => {
+    try {
+      setState(prev => ({ ...prev, loading: true, error: null }));
+      const result = await eventService.cancelParticipation(id);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        success: true,
+        // Remover o evento da lista de participando se estiver sendo mostrado
+        events: prev.events.filter(e => e._id !== id)
+      }));
+      return result;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao cancelar participação';
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: errorMessage,
+        success: false
+      }));
+      throw error;
+    }
+  }, []);
+
+  // Cancelar evento
+  const cancelEvent = useCallback(async (id: string) => {
+    try {
+      setState(prev => ({ ...prev, loading: true, error: null }));
+      const result = await eventService.cancelEvent(id);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        success: true,
+        // Atualizar o status do evento na lista
+        events: prev.events.map(e => 
+          e._id === id ? { ...e, status: 'cancelado' } : e
+        ),
+        event: prev.event?._id === id 
+          ? { ...prev.event, status: 'cancelado' } 
+          : prev.event
+      }));
+      return result;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao cancelar evento';
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: errorMessage,
+        success: false
+      }));
+      throw error;
+    }
+  }, []);
+
+  // Participar de um evento
+  const participateInEvent = useCallback(async (id: string) => {
+    try {
+      setState(prev => ({ ...prev, loading: true, error: null }));
+      const result = await eventService.participateInEvent(id);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        success: true,
+        // Atualizar o evento atual se estiver sendo visualizado
+        event: prev.event?._id === id 
+          ? { ...prev.event, participantsCount: (prev.event.participantsCount || 0) + 1 } 
+          : prev.event
+      }));
+      return result;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao participar do evento';
       setState(prev => ({
         ...prev,
         loading: false,
@@ -270,7 +421,8 @@ export const useEvents = () => {
         page: 1,
         pages: 1,
         total: 0
-      }
+      },
+      counts: {}
     });
   }, []);
 
@@ -289,6 +441,11 @@ export const useEvents = () => {
     deleteEvent,
     approveEvent,
     rejectEvent,
+    fetchMyEvents,
+    fetchParticipatingEvents,
+    participateInEvent,
+    cancelEventParticipation,
+    cancelEvent,
     clearState,
     clearError
   };

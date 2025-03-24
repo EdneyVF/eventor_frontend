@@ -37,7 +37,8 @@ import {
   Check as CheckIcon,
   Close as CloseIcon,
   Edit as EditIcon,
-  Delete as DeleteIcon
+  Delete as DeleteIcon,
+  Add as AddIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -95,7 +96,7 @@ const AdminDashboardPage: React.FC = () => {
     const loadEvents = async () => {
       try {
         await fetchEvents({
-          page: page + 1, // API usa base 1 para paginação
+          page: page + 1,
           limit: rowsPerPage,
           search: searchQuery || undefined,
           status: filterStatus !== 'all' ? filterStatus : undefined,
@@ -161,23 +162,31 @@ const AdminDashboardPage: React.FC = () => {
   };
 
   const handleApproveEvent = async () => {
-    if (selectedEventId) {
-      try {
-        await approveEvent(selectedEventId);
-        setSnackbar({
-          open: true,
-          message: 'Evento aprovado com sucesso!',
-          severity: 'success'
-        });
-      } catch (error) {
-        setSnackbar({
-          open: true,
-          message: 'Erro ao aprovar evento.',
-          severity: 'error'
-        });
-      }
+    if (!selectedEventId) return;
+    
+    try {
+      await approveEvent(selectedEventId);
+      handleMenuClose();
+      setSnackbar({
+        open: true,
+        message: 'Evento aprovado com sucesso!',
+        severity: 'success'
+      });
+      // Recarregar eventos
+      fetchEvents({
+        page: page + 1,
+        limit: rowsPerPage,
+        search: searchQuery,
+        status: filterStatus !== 'all' ? filterStatus : undefined,
+        approvalStatus: filterApproval !== 'all' ? filterApproval : undefined
+      });
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: err instanceof Error ? err.message : 'Erro ao aprovar evento',
+        severity: 'error'
+      });
     }
-    handleMenuClose();
   };
 
   const handleOpenRejectDialog = () => {
@@ -191,44 +200,61 @@ const AdminDashboardPage: React.FC = () => {
   };
 
   const handleRejectEvent = async () => {
-    if (selectedEventId && rejectionReason.trim() !== '') {
-      try {
-        await rejectEvent(selectedEventId, rejectionReason);
-        setSnackbar({
-          open: true,
-          message: 'Evento rejeitado com sucesso!',
-          severity: 'success'
-        });
-        handleCloseRejectDialog();
-      } catch (error) {
-        setSnackbar({
-          open: true,
-          message: 'Erro ao rejeitar evento.',
-          severity: 'error'
-        });
-        handleCloseRejectDialog();
-      }
+    if (!selectedEventId || rejectionReason.trim() === '') return;
+    
+    try {
+      await rejectEvent(selectedEventId, rejectionReason);
+      setRejectionReason('');
+      handleCloseRejectDialog();
+      handleMenuClose();
+      setSnackbar({
+        open: true,
+        message: 'Evento rejeitado com sucesso!',
+        severity: 'success'
+      });
+      // Recarregar eventos
+      fetchEvents({
+        page: page + 1,
+        limit: rowsPerPage,
+        search: searchQuery,
+        status: filterStatus !== 'all' ? filterStatus : undefined,
+        approvalStatus: filterApproval !== 'all' ? filterApproval : undefined
+      });
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: err instanceof Error ? err.message : 'Erro ao rejeitar evento',
+        severity: 'error'
+      });
     }
   };
 
   const handleDeleteEvent = async () => {
-    if (selectedEventId) {
-      try {
-        await deleteEvent(selectedEventId);
-        setSnackbar({
-          open: true,
-          message: 'Evento deletado com sucesso!',
-          severity: 'success'
-        });
-      } catch (error) {
-        setSnackbar({
-          open: true,
-          message: 'Erro ao deletar evento.',
-          severity: 'error'
-        });
-      }
+    if (!selectedEventId) return;
+    
+    try {
+      await deleteEvent(selectedEventId);
+      handleMenuClose();
+      setSnackbar({
+        open: true,
+        message: 'Evento excluído com sucesso!',
+        severity: 'success'
+      });
+      // Recarregar eventos
+      fetchEvents({
+        page: page + 1,
+        limit: rowsPerPage,
+        search: searchQuery,
+        status: filterStatus !== 'all' ? filterStatus : undefined,
+        approvalStatus: filterApproval !== 'all' ? filterApproval : undefined
+      });
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: err instanceof Error ? err.message : 'Erro ao excluir evento',
+        severity: 'error'
+      });
     }
-    handleMenuClose();
   };
 
   const handleCloseSnackbar = () => {
@@ -255,6 +281,8 @@ const AdminDashboardPage: React.FC = () => {
     switch (status) {
       case 'ativo':
         return <Chip size="small" label="Ativo" color="success" />;
+      case 'inativo':
+        return <Chip size="small" label="Inativo" color="warning" />;
       case 'cancelado':
         return <Chip size="small" label="Cancelado" color="error" />;
       case 'finalizado':
@@ -298,6 +326,7 @@ const AdminDashboardPage: React.FC = () => {
           </Typography>
 
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            
             {/* Filtro de Status */}
             <FormControl size="small" sx={{ minWidth: 120 }}>
               <InputLabel>Status</InputLabel>
@@ -308,6 +337,7 @@ const AdminDashboardPage: React.FC = () => {
               >
                 <MenuItem value="all">Todos</MenuItem>
                 <MenuItem value="ativo">Ativos</MenuItem>
+                <MenuItem value="inativo">Inativos</MenuItem>
                 <MenuItem value="cancelado">Cancelados</MenuItem>
                 <MenuItem value="finalizado">Finalizados</MenuItem>
               </Select>
@@ -344,6 +374,17 @@ const AdminDashboardPage: React.FC = () => {
               }}
               sx={{ width: { xs: '100%', sm: '300px' } }}
             />
+            
+            {/* Botão para criar um novo evento */}
+            <Button
+              variant="contained"
+              color="secondary"
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={() => navigate('/events/create')}
+            >
+              Criar Evento
+            </Button>
           </Box>
         </Box>
 

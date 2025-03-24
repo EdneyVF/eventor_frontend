@@ -10,10 +10,9 @@ import {
   ListItemText
 } from '@mui/material';
 import {
-  Dashboard as DashboardIcon,
   Category as CategoryIcon,
   People as PeopleIcon,
-  EventNote as EventIcon
+  Event as EventIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -24,16 +23,10 @@ const AdminNavigation: React.FC = () => {
   
   const navigationItems = [
     { 
-      text: 'Dashboard', 
-      icon: <DashboardIcon />, 
-      path: '/admin',
-      exact: true
-    },
-    { 
       text: 'Eventos', 
       icon: <EventIcon />, 
-      path: '/admin/events',
-      exact: false
+      path: '/admin',
+      exact: true
     },
     { 
       text: 'Categorias', 

@@ -19,7 +19,8 @@ type ActionType =
   | { type: 'AUTH_SUCCESS'; payload: User }
   | { type: 'AUTH_FAILURE'; payload: string }
   | { type: 'LOGOUT' }
-  | { type: 'CLEAR_ERROR' };
+  | { type: 'CLEAR_ERROR' }
+  | { type: 'UPDATE_USER'; payload: User };
 
 // Reducer
 const authReducer = (state: AuthState, action: ActionType): AuthState => {
@@ -50,6 +51,13 @@ const authReducer = (state: AuthState, action: ActionType): AuthState => {
       return { 
         ...state, 
         error: null 
+      };
+    case 'UPDATE_USER':
+      return {
+        ...state,
+        user: action.payload,
+        loading: false,
+        error: null
       };
     default:
       return state;
@@ -130,6 +138,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     dispatch({ type: 'CLEAR_ERROR' });
   }, []);
 
+  // Atualizar dados do usuário após edição de perfil
+  const updateUserData = useCallback(async () => {
+    try {
+      dispatch({ type: 'AUTH_REQUEST' });
+      const userData = await authService.getMe();
+      // Preservar o token existente
+      const token = authState.user?.token || '';
+      dispatch({ 
+        type: 'UPDATE_USER', 
+        payload: { ...userData, token }
+      });
+      return userData;
+    } catch (err) {
+      const errorMessage = 
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 
+        'Erro ao atualizar dados do usuário.';
+      dispatch({ type: 'AUTH_FAILURE', payload: errorMessage });
+      throw err;
+    }
+  }, [authState.user]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -137,7 +166,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         login,
         register,
         logout,
-        clearError
+        clearError,
+        updateUserData
       }}
     >
       {children}

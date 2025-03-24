@@ -1,14 +1,13 @@
-import React from 'react';
-import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import React, { lazy, Suspense } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { CircularProgress, Box, CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './hooks/useAuth';
-import AuthPage from './pages/AuthPage';
-import HomePage from './pages/HomePage';
-import AdminDashboardPage from './pages/AdminDashboardPage';
-import AdminCategoriesPage from './pages/AdminCategoriesPage';
-import AdminUsersPage from './pages/AdminUsersPage';
 import Layout from './components/layout/Layout';
+
+// Páginas com carregamento normal
+import HomePage from './pages/HomePage';
+import AuthPage from './pages/AuthPage';
 
 // Tema personalizado
 const theme = createTheme({
@@ -60,105 +59,89 @@ const theme = createTheme({
   },
 });
 
-// Componente para rotas protegidas por autenticação de admin
-interface ProtectedAdminRouteProps {
-  children: React.ReactNode;
-}
+// Páginas com lazy loading
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const EventsPage = lazy(() => import('./pages/EventsPage'));
+const MyEventsPage = lazy(() => import('./pages/MyEventsPage'));
+const CreateEventPage = lazy(() => import('./pages/CreateEventPage'));
+const EventDetailsPage = lazy(() => import('./pages/EventDetailsPage'));
 
-const ProtectedAdminRoute: React.FC<ProtectedAdminRouteProps> = ({ children }) => {
+// Páginas de admin com lazy loading
+const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
+const AdminCategoriesPage = lazy(() => import('./pages/AdminCategoriesPage'));
+const AdminUsersPage = lazy(() => import('./pages/AdminUsersPage'));
+
+// Componente para carregamento
+const LoadingComponent = () => (
+  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+    <CircularProgress />
+  </Box>
+);
+
+// Componente para rotas protegidas que requerem autenticação
+const ProtectedRoute = () => {
   const { authState } = useAuth();
-  const location = useLocation();
-  const { user, loading } = authState;
-
-  if (loading) {
-    return <div>Carregando...</div>;
+  
+  if (authState.loading) {
+    return <LoadingComponent />;
   }
-
-  if (!user) {
-    // Redirecionar para o login se não estiver autenticado
-    return <Navigate to="/auth" state={{ from: location }} replace />;
-  }
-
-  if (user.role !== 'admin') {
-    // Redirecionar para a home se não for admin
-    return <Navigate to="/" replace />;
-  }
-
-  // Se estiver autenticado e for admin, renderizar o componente
-  return children;
+  
+  return authState.user ? <Outlet /> : <Navigate to="/auth" />;
 };
 
-// Componente App com Context Providers e Roteamento
-function AppWithProviders() {
-  return (
-    <BrowserRouter>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/auth" element={<AuthPage />} />
-          <Route 
-            path="/admin" 
-            element={
-              <ProtectedAdminRoute>
-                <AdminDashboardPage />
-              </ProtectedAdminRoute>
-            } 
-          />
-          <Route 
-            path="/admin/events" 
-            element={
-              <ProtectedAdminRoute>
-                <AdminDashboardPage />
-              </ProtectedAdminRoute>
-            } 
-          />
-          <Route 
-            path="/admin/categories" 
-            element={
-              <ProtectedAdminRoute>
-                <AdminCategoriesPage />
-              </ProtectedAdminRoute>
-            } 
-          />
-          <Route 
-            path="/admin/users" 
-            element={
-              <ProtectedAdminRoute>
-                <AdminUsersPage />
-              </ProtectedAdminRoute>
-            } 
-          />
-          <Route 
-            path="/admin/events/:id" 
-            element={
-              <ProtectedAdminRoute>
-                <AdminDashboardPage />
-              </ProtectedAdminRoute>
-            } 
-          />
-          <Route 
-            path="/admin/events/edit/:id" 
-            element={
-              <ProtectedAdminRoute>
-                <AdminDashboardPage />
-              </ProtectedAdminRoute>
-            } 
-          />
-        </Routes>
-      </Layout>
-    </BrowserRouter>
-  );
-}
+// Componente para rotas protegidas de admin
+const ProtectedAdminRoute = () => {
+  const { authState } = useAuth();
+  
+  if (authState.loading) {
+    return <LoadingComponent />;
+  }
+  
+  if (!authState.user) {
+    return <Navigate to="/auth" />;
+  }
+  
+  return authState.user.role === 'admin' ? <Outlet /> : <Navigate to="/" />;
+};
 
-function App() {
+const App = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <AppWithProviders />
+        <Router>
+          <Layout>
+            <Suspense fallback={<LoadingComponent />}>
+              <Routes>
+                {/* Rotas públicas */}
+                <Route path="/" element={<HomePage />} />
+                <Route path="/auth" element={<AuthPage />} />
+                <Route path="/events" element={<EventsPage />} />
+                <Route path="/events/:id" element={<EventDetailsPage />} />
+                
+                {/* Rotas protegidas (apenas usuários autenticados) */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/my-events" element={<MyEventsPage />} />
+                  <Route path="/events/create" element={<CreateEventPage />} />
+                </Route>
+                
+                {/* Rotas de admin (apenas usuários admin) */}
+                <Route element={<ProtectedAdminRoute />}>
+                  <Route path="/admin" element={<AdminDashboardPage />} />
+                  <Route path="/admin/categories" element={<AdminCategoriesPage />} />
+                  <Route path="/admin/users" element={<AdminUsersPage />} />
+                </Route>
+                
+                {/* Rota para páginas não encontradas */}
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+            </Suspense>
+          </Layout>
+        </Router>
       </AuthProvider>
     </ThemeProvider>
   );
-}
+};
 
 export default App;

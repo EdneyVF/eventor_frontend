@@ -11,9 +11,19 @@ import {
   Menu,
   MenuItem,
   Typography,
-  Tooltip
+  Tooltip,
+  Divider,
+  Avatar,
+  ListItemIcon
 } from '@mui/material';
-import { Menu as MenuIcon, Dashboard as DashboardIcon } from '@mui/icons-material';
+import { 
+  Menu as MenuIcon, 
+  Dashboard as DashboardIcon, 
+  Logout, 
+  Person,
+  Event as EventIcon,
+  Add as AddIcon
+} from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import logoSvg from '../../assets/icons/logo.png';
@@ -46,6 +56,94 @@ const Header: React.FC = () => {
     logout();
     handleClose();
     navigate('/');
+  };
+
+  // Renderiza o menu do usuário autenticado
+  const renderUserMenu = () => {
+    if (!user) return null;
+
+    return (
+      <Box sx={{ ml: 2 }}>
+        <IconButton
+          onClick={handleMenu}
+          size="small"
+          edge="end"
+          color="inherit"
+          aria-label="menu do usuário"
+          aria-controls={open ? 'user-menu' : undefined}
+          aria-haspopup="true"
+          aria-expanded={open ? 'true' : undefined}
+        >
+          <Avatar
+            sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}
+          >
+            {user.name.charAt(0).toUpperCase()}
+          </Avatar>
+        </IconButton>
+        <Menu
+          id="user-menu"
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleClose}
+          PaperProps={{
+            elevation: 0,
+            sx: {
+              overflow: 'visible',
+              filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+              mt: 1.5,
+              '& .MuiAvatar-root': {
+                width: 32,
+                height: 32,
+                ml: -0.5,
+                mr: 1,
+              },
+              '&:before': {
+                content: '""',
+                display: 'block',
+                position: 'absolute',
+                top: 0,
+                right: 14,
+                width: 10,
+                height: 10,
+                bgcolor: 'background.paper',
+                transform: 'translateY(-50%) rotate(45deg)',
+                zIndex: 0,
+              },
+            },
+          }}
+          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        >
+          <MenuItem disabled>
+            <Typography variant="body2" color="textSecondary">
+              {user.email}
+            </Typography>
+          </MenuItem>
+          <Divider />
+          <MenuItem onClick={() => { handleClose(); navigate('/profile'); }}>
+            <ListItemIcon>
+              <Person fontSize="small" />
+            </ListItemIcon>
+            Meu Perfil
+          </MenuItem>
+          {user.role === 'admin' && (
+            <MenuItem onClick={() => { handleClose(); navigate('/admin'); }}>
+              <ListItemIcon>
+                <DashboardIcon fontSize="small" />
+              </ListItemIcon>
+              Dashboard Admin
+            </MenuItem>
+          )}
+          <Divider />
+          <MenuItem onClick={handleLogout}>
+            <ListItemIcon>
+              <Logout fontSize="small" />
+            </ListItemIcon>
+            Sair
+          </MenuItem>
+        </Menu>
+      </Box>
+    );
   };
 
   return (
@@ -123,7 +221,7 @@ const Header: React.FC = () => {
           
           {/* Botões à direita (desktop) */}
           {!isMobile ? (
-            <Box sx={{ display: 'flex', gap: { xs: 1, sm: 2 } }}>
+            <Box sx={{ display: 'flex', gap: { xs: 1, sm: 2 }, alignItems: 'center' }}>
               {user ? (
                 <>
                   {user.role === 'admin' && (
@@ -141,51 +239,46 @@ const Header: React.FC = () => {
                     </Tooltip>
                   )}
                   <Button 
-                    color="primary" 
+                    color="primary"
+                    variant="outlined"
                     onClick={() => navigate('/events')}
+                    size="small"
+                    sx={{ fontSize: { xs: '0.85rem', sm: '0.9rem' } }}
+                  >
+                    Eventos
+                  </Button>
+                  <Button 
+                    color="primary" 
+                    variant="outlined"
+                    onClick={() => navigate('/my-events')}
                     size="small"
                     sx={{ fontSize: { xs: '0.85rem', sm: '0.9rem' } }}
                   >
                     Meus Eventos
                   </Button>
-                  <Button 
-                    color="primary" 
-                    onClick={() => navigate('/profile')}
-                    size="small"
-                    sx={{ fontSize: { xs: '0.85rem', sm: '0.9rem' } }}
-                  >
-                    Perfil
-                  </Button>
-                  <Button 
-                    variant="outlined" 
-                    color="primary" 
-                    onClick={handleLogout}
-                    size="small"
-                    sx={{ fontSize: { xs: '0.85rem', sm: '0.9rem' } }}
-                  >
-                    Sair
-                  </Button>
+                  <Tooltip title="Criar Novo Evento">
+                    <Button 
+                      color="secondary" 
+                      variant="outlined"
+                      startIcon={<AddIcon />}
+                      onClick={() => navigate('/events/create')}
+                      size="small"
+                      sx={{ fontSize: { xs: '0.85rem', sm: '0.9rem' } }}
+                    >
+                      Criar Evento
+                    </Button>
+                  </Tooltip>
+                  {renderUserMenu()}
                 </>
               ) : (
-                <>
-                  <Button 
-                    color="primary" 
-                    onClick={handleLogin}
-                    size="small"
-                    sx={{ fontSize: { xs: '0.85rem', sm: '0.9rem' } }}
-                  >
-                    Entrar
-                  </Button>
-                  <Button 
-                    variant="contained" 
-                    color="primary" 
-                    onClick={handleLogin}
-                    size="small"
-                    sx={{ fontSize: { xs: '0.85rem', sm: '0.9rem' } }}
-                  >
-                    Cadastrar
-                  </Button>
-                </>
+                <Button 
+                  variant="contained" 
+                  color="primary" 
+                  onClick={handleLogin}
+                  sx={{ fontWeight: 'medium' }}
+                >
+                  Entrar
+                </Button>
               )}
             </Box>
           ) : (
@@ -222,27 +315,51 @@ const Header: React.FC = () => {
               >
                 {user ? (
                   <>
+                    <MenuItem onClick={() => { navigate('/profile'); handleClose(); }}>
+                      <ListItemIcon>
+                        <Person fontSize="small" />
+                      </ListItemIcon>
+                      Meu Perfil
+                    </MenuItem>
+                    <Divider />
                     {user.role === 'admin' && (
                       <MenuItem onClick={() => { navigate('/admin'); handleClose(); }}>
-                        <DashboardIcon fontSize="small" sx={{ mr: 1 }} />
+                        <ListItemIcon>
+                          <DashboardIcon fontSize="small" />
+                        </ListItemIcon>
                         Painel Administrativo
                       </MenuItem>
                     )}
                     <MenuItem onClick={() => { navigate('/events'); handleClose(); }}>
+                      <ListItemIcon>
+                        <EventIcon fontSize="small" />
+                      </ListItemIcon>
+                      Eventos
+                    </MenuItem>
+                    <MenuItem onClick={() => { navigate('/my-events'); handleClose(); }}>
+                      <ListItemIcon>
+                        <EventIcon fontSize="small" />
+                      </ListItemIcon>
                       Meus Eventos
                     </MenuItem>
-                    <MenuItem onClick={() => { navigate('/profile'); handleClose(); }}>
-                      Perfil
+                    <MenuItem onClick={() => { navigate('/events/create'); handleClose(); }}
+                      sx={{ color: 'secondary.main' }}
+                    >
+                      <ListItemIcon>
+                        <AddIcon fontSize="small" sx={{ color: 'secondary.main' }} />
+                      </ListItemIcon>
+                      Criar Evento
                     </MenuItem>
+                    <Divider />
                     <MenuItem onClick={handleLogout}>
+                      <ListItemIcon>
+                        <Logout fontSize="small" />
+                      </ListItemIcon>
                       Sair
                     </MenuItem>
                   </>
                 ) : (
-                  <>
-                    <MenuItem onClick={handleLogin}>Entrar</MenuItem>
-                    <MenuItem onClick={handleLogin}>Cadastrar</MenuItem>
-                  </>
+                  <MenuItem onClick={handleLogin}>Entrar</MenuItem>
                 )}
               </Menu>
             </Box>
