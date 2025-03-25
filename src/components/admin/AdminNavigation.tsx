@@ -24,7 +24,7 @@ const AdminNavigation: React.FC = () => {
   
   const navigationItems = [
     { 
-      text: 'Dashboard', 
+      text: 'Todos os Eventos', 
       icon: <DashboardIcon />, 
       path: '/admin',
       exact: true

@@ -77,7 +77,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const loadUser = async () => {
       const token = localStorage.getItem('token');
       
-      if (token) {
+      // Verificar se o token tem formato válido
+      if (token && authService.isTokenValid(token)) {
         try {
           dispatch({ type: 'AUTH_REQUEST' });
           const userData = await authService.getMe();
@@ -85,14 +86,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             type: 'AUTH_SUCCESS', 
             payload: { ...userData, token }
           });
-        } catch (err) {
-          // Token inválido ou expirado
-          localStorage.removeItem('token');
-          dispatch({ 
-            type: 'AUTH_FAILURE', 
-            payload: 'Sessão expirada. Por favor, faça login novamente.' 
-          });
+        } catch {
+          // Tentar usar refresh token para obter novo token
+          try {
+            const newToken = await authService.refreshToken();
+            
+            if (newToken) {
+              // Com novo token, tentar obter dados do usuário novamente
+              const userData = await authService.getMe();
+              dispatch({ 
+                type: 'AUTH_SUCCESS', 
+                payload: { ...userData, token: newToken }
+              });
+            } else {
+              // Sem refresh token válido, fazer logout
+              authService.clearTokens();
+              dispatch({ 
+                type: 'AUTH_FAILURE', 
+                payload: 'Sessão expirada. Por favor, faça login novamente.' 
+              });
+            }
+          } catch {
+            // Token inválido ou expirado e não foi possível renovar
+            authService.clearTokens();
+            dispatch({ 
+              type: 'AUTH_FAILURE', 
+              payload: 'Sessão expirada. Por favor, faça login novamente.' 
+            });
+          }
         }
+      } else if (token) {
+        // Token existe mas não é válido
+        authService.clearTokens();
+        dispatch({ 
+          type: 'AUTH_FAILURE', 
+          payload: 'Sessão inválida. Por favor, faça login novamente.' 
+        });
       }
     };
 
