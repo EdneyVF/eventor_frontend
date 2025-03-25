@@ -10,10 +10,6 @@ import {
   Tabs,
   CircularProgress,
   Alert,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Pagination,
   FormControl,
   InputLabel,
@@ -82,14 +78,6 @@ const MyEventsPage: React.FC = () => {
     cancelEventParticipation
   } = useEvents();
 
-  // Estado para o diálogo de confirmação
-  const [confirmDialog, setConfirmDialog] = useState({
-    open: false,
-    title: '',
-    message: '',
-    action: () => {}
-  });
-
   // Alerta para mensagens de sucesso/erro
   const [alert, setAlert] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
@@ -153,67 +141,53 @@ const MyEventsPage: React.FC = () => {
   };
 
   const handleCancelEvent = async (eventId: string) => {
-    setConfirmDialog({
-      open: true,
-      title: 'Cancelar Evento',
-      message: 'Tem certeza que deseja cancelar este evento? Esta ação não pode ser desfeita.',
-      action: async () => {
-        try {
-          await cancelEvent(eventId);
-          setAlert({
-            type: 'success',
-            message: 'Evento cancelado com sucesso!'
-          });
-          // Recarregar eventos apenas da aba atual
-          if (tabValue === 0) {
-            const params: EventQueryParams = { page, limit };
-            if (statusFilter) {
-              params.status = statusFilter;
-            }
-            const data = await fetchMyEvents(params);
-            setCreatedEvents(data);
-          }
-        } catch {
-          setAlert({
-            type: 'error',
-            message: 'Erro ao cancelar evento. Tente novamente.'
-          });
+    try {
+      await cancelEvent(eventId);
+      setAlert({
+        type: 'success',
+        message: 'Evento cancelado com sucesso!'
+      });
+      // Recarregar eventos apenas da aba atual
+      if (tabValue === 0) {
+        const params: EventQueryParams = { page, limit };
+        if (statusFilter) {
+          params.status = statusFilter;
         }
+        const data = await fetchMyEvents(params);
+        setCreatedEvents(data);
       }
-    });
+    } catch (err) {
+      setAlert({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Erro ao cancelar evento. Tente novamente.'
+      });
+    }
   };
 
   const handleCancelParticipation = async (eventId: string) => {
-    setConfirmDialog({
-      open: true,
-      title: 'Cancelar Participação',
-      message: 'Tem certeza que deseja cancelar sua participação neste evento?',
-      action: async () => {
-        try {
-          await cancelEventParticipation(eventId);
-          setAlert({
-            type: 'success',
-            message: 'Participação cancelada com sucesso!'
-          });
-          // Recarregar eventos da aba de participação
-          const params: EventQueryParams = { page, limit };
-          if (statusFilter === 'future') {
-            params.when = 'future';
-          } else if (statusFilter === 'past') {
-            params.when = 'past';
-          } else if (statusFilter === 'canceled') {
-            params.status = 'canceled';
-          }
-          const data = await fetchParticipatingEvents(params);
-          setParticipatingEvents(data);
-        } catch {
-          setAlert({
-            type: 'error',
-            message: 'Erro ao cancelar participação. Tente novamente.'
-          });
-        }
+    try {
+      await cancelEventParticipation(eventId);
+      setAlert({
+        type: 'success',
+        message: 'Participação cancelada com sucesso!'
+      });
+      // Recarregar eventos da aba de participação
+      const params: EventQueryParams = { page, limit };
+      if (statusFilter === 'future') {
+        params.when = 'future';
+      } else if (statusFilter === 'past') {
+        params.when = 'past';
+      } else if (statusFilter === 'canceled') {
+        params.status = 'canceled';
       }
-    });
+      const data = await fetchParticipatingEvents(params);
+      setParticipatingEvents(data);
+    } catch (err) {
+      setAlert({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Erro ao cancelar participação. Tente novamente.'
+      });
+    }
   };
 
   const handleStatusFilterChange = (status: string) => {
@@ -320,9 +294,165 @@ const MyEventsPage: React.FC = () => {
     );
   };
 
+  // Render created events with EventCard
+  const renderCreatedEvents = () => {
+    if (loading) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress />
+        </Box>
+      );
+    }
+    
+    if (error) {
+      return (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      );
+    }
+    
+    if (createdEvents.length === 0) {
+      return (
+        <Paper sx={{ 
+          py: 6, 
+          px: 4, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center',
+          borderRadius: 2
+        }}>
+          <EventIcon sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            Você ainda não criou nenhum evento
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Crie seu primeiro evento e comece a organizar!
+          </Typography>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={() => navigate('/events/create')}
+          >
+            Criar Evento
+          </Button>
+        </Paper>
+      );
+    }
+    
+    return (
+      <>
+        <Grid container spacing={3}>
+          {createdEvents.map(event => (
+            <Grid item xs={12} sm={6} md={4} key={event._id}>
+              <EventCard 
+                event={event}
+                showEditButton={event.status !== 'canceled' && event.approvalStatus === 'approved'}
+                showCancelButton={event.status === 'active'}
+                onEdit={handleEditEvent}
+                onCancel={handleCancelEvent}
+              />
+            </Grid>
+          ))}
+        </Grid>
+        
+        {pagination.pages > 1 && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+            <Pagination 
+              count={pagination.pages} 
+              page={page} 
+              onChange={handlePageChange}
+              color="primary"
+              size="large"
+              showFirstButton
+              showLastButton
+            />
+          </Box>
+        )}
+      </>
+    );
+  };
+
+  // Render participating events with EventCard
+  const renderParticipatingEvents = () => {
+    if (loading) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress />
+        </Box>
+      );
+    }
+    
+    if (error) {
+      return (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      );
+    }
+    
+    if (participatingEvents.length === 0) {
+      return (
+        <Paper sx={{ 
+          py: 6, 
+          px: 4, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center',
+          borderRadius: 2
+        }}>
+          <EventAvailableIcon sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            Você não está participando de nenhum evento
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Explore eventos disponíveis e participe!
+          </Typography>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={() => navigate('/events')}
+          >
+            Explorar Eventos
+          </Button>
+        </Paper>
+      );
+    }
+    
+    return (
+      <>
+        <Grid container spacing={3}>
+          {participatingEvents.map(event => (
+            <Grid item xs={12} sm={6} md={4} key={event._id}>
+              <EventCard 
+                event={event}
+                showCancelParticipationButton={event.status === 'active'}
+                onCancelParticipation={handleCancelParticipation}
+              />
+            </Grid>
+          ))}
+        </Grid>
+        
+        {pagination.pages > 1 && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+            <Pagination 
+              count={pagination.pages} 
+              page={page} 
+              onChange={handlePageChange}
+              color="primary"
+              size="large"
+              showFirstButton
+              showLastButton
+            />
+          </Box>
+        )}
+      </>
+    );
+  };
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* Alerta de sucesso ou erro */}
+      {/* Alert message */}
       {alert && (
         <Alert 
           severity={alert.type} 
@@ -380,173 +510,15 @@ const MyEventsPage: React.FC = () => {
         {/* Tab panel para eventos criados pelo usuário */}
         <TabPanel value={tabValue} index={0}>
           {renderCreatedEventsFilters()}
-          
-          {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-              <CircularProgress />
-            </Box>
-          ) : error ? (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {error}
-            </Alert>
-          ) : createdEvents.length > 0 ? (
-            <>
-              <Grid container spacing={4}>
-                {createdEvents.map((event) => (
-                  <Grid item xs={12} sm={6} md={4} key={event._id}>
-                    <EventCard
-                      event={event}
-                      showEditButton={true}
-                      showCancelButton={true}
-                      onEdit={handleEditEvent}
-                      onCancel={handleCancelEvent}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
-              
-              {/* Paginação */}
-              {pagination?.pages > 1 && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
-                  <Pagination 
-                    count={pagination.pages} 
-                    page={page} 
-                    onChange={handlePageChange} 
-                    color="primary" 
-                    size="large"
-                  />
-                </Box>
-              )}
-            </>
-          ) : (
-            <Paper sx={{ p: 6, textAlign: 'center' }}>
-              <EventIcon sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                Você ainda não criou nenhum evento
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Comece agora mesmo a criar seu primeiro evento!
-              </Typography>
-              <Button 
-                variant="contained" 
-                color="primary" 
-                onClick={() => navigate('/events/create')}
-              >
-                Criar Evento
-              </Button>
-            </Paper>
-          )}
+          {renderCreatedEvents()}
         </TabPanel>
 
         {/* Tab panel para eventos em que o usuário está participando */}
         <TabPanel value={tabValue} index={1}>
           {renderParticipatingEventsFilters()}
-          
-          {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-              <CircularProgress />
-            </Box>
-          ) : error ? (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {error}
-            </Alert>
-          ) : participatingEvents.length > 0 ? (
-            <>
-              <Grid container spacing={4}>
-                {participatingEvents.map((event) => (
-                  <Grid item xs={12} sm={6} md={4} key={event._id}>
-                    <EventCard
-                      event={event}
-                      showCancelParticipationButton={true}
-                      onCancelParticipation={handleCancelParticipation}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
-              
-              {/* Paginação */}
-              {pagination?.pages > 1 && (
-                <Box sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'column',
-                  alignItems: 'center', 
-                  mt: 4,
-                  gap: 2
-                }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Mostrando {participatingEvents.length} de {pagination.total} eventos
-                  </Typography>
-                  <Pagination 
-                    count={pagination.pages} 
-                    page={page} 
-                    onChange={handlePageChange} 
-                    color="primary" 
-                    showFirstButton
-                    showLastButton
-                    size="large"
-                    sx={{
-                      '& .MuiPaginationItem-root': {
-                        fontSize: '1rem',
-                        minWidth: '40px',
-                        height: '40px'
-                      }
-                    }}
-                  />
-                </Box>
-              )}
-            </>
-          ) : (
-            <Paper sx={{ p: 6, textAlign: 'center' }}>
-              <EventAvailableIcon sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                Você não está participando de nenhum evento
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Explore eventos disponíveis e participe!
-              </Typography>
-              <Button 
-                variant="contained" 
-                color="primary" 
-                onClick={() => navigate('/events')}
-              >
-                Explorar Eventos
-              </Button>
-            </Paper>
-          )}
+          {renderParticipatingEvents()}
         </TabPanel>
       </Paper>
-
-      {/* Diálogo de confirmação */}
-      <Dialog
-        open={confirmDialog.open}
-        onClose={() => setConfirmDialog(prev => ({ ...prev, open: false }))}
-        aria-labelledby="confirm-dialog-title"
-        aria-describedby="confirm-dialog-description"
-      >
-        <DialogTitle id="confirm-dialog-title">
-          {confirmDialog.title}
-        </DialogTitle>
-        <DialogContent>
-          <Typography id="confirm-dialog-description">
-            {confirmDialog.message}
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmDialog(prev => ({ ...prev, open: false }))} color="primary">
-            Cancelar
-          </Button>
-          <Button 
-            onClick={() => {
-              confirmDialog.action();
-              setConfirmDialog(prev => ({ ...prev, open: false }));
-            }} 
-            color={confirmDialog.title.includes('Cancelar') ? "error" : "primary"}
-            variant="contained"
-          >
-            Confirmar
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Container>
   );
 };

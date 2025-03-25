@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Card, 
   CardContent, 
@@ -7,7 +7,14 @@ import {
   Typography, 
   Chip, 
   Button, 
-  Divider 
+  Divider,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Tooltip
 } from '@mui/material';
 import {
   Event as EventIcon,
@@ -15,7 +22,8 @@ import {
   Edit as EditIcon,
   Person as PersonIcon,
   AttachMoney as AttachMoneyIcon,
-  Cancel as CancelIcon
+  Cancel as CancelIcon,
+  DeleteOutline as DeleteIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { Event } from '../../services/eventService';
@@ -41,6 +49,36 @@ const EventCard: React.FC<EventCardProps> = ({
   onCancelParticipation
 }) => {
   const navigate = useNavigate();
+  const [openCancelDialog, setOpenCancelDialog] = useState(false);
+  const [openCancelParticipationDialog, setOpenCancelParticipationDialog] = useState(false);
+
+  // Handlers for cancel event dialog
+  const handleOpenCancelDialog = () => {
+    setOpenCancelDialog(true);
+  };
+
+  const handleCloseCancelDialog = () => {
+    setOpenCancelDialog(false);
+  };
+
+  const handleConfirmCancel = () => {
+    onCancel?.(event._id);
+    setOpenCancelDialog(false);
+  };
+
+  // Handlers for cancel participation dialog
+  const handleOpenCancelParticipationDialog = () => {
+    setOpenCancelParticipationDialog(true);
+  };
+
+  const handleCloseCancelParticipationDialog = () => {
+    setOpenCancelParticipationDialog(false);
+  };
+
+  const handleConfirmCancelParticipation = () => {
+    onCancelParticipation?.(event._id);
+    setOpenCancelParticipationDialog(false);
+  };
 
   // Formatar data para exibição
   const formatDate = (dateString: string) => {
@@ -74,10 +112,12 @@ const EventCard: React.FC<EventCardProps> = ({
       display: 'flex', 
       flexDirection: 'column',
       opacity: event.status === 'canceled' ? 0.7 : 1,
-      transition: 'transform 0.2s ease-in-out',
+      transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+      borderRadius: 2,
+      overflow: 'hidden',
       '&:hover': {
         transform: 'translateY(-4px)',
-        boxShadow: 3
+        boxShadow: 6
       }
     }}>
       <Box sx={{ position: 'relative' }}>
@@ -204,29 +244,43 @@ const EventCard: React.FC<EventCardProps> = ({
               variant="outlined"
             />
           </Box>
-          <Box>
+          <Box sx={{ display: 'flex' }}>
             {event.status !== 'canceled' && event.approvalStatus === 'approved' && (
               <>
                 {showEditButton && (
-                  <Button 
-                    size="small" 
-                    color="primary" 
-                    onClick={() => onEdit?.(event._id)}
-                    startIcon={<EditIcon />}
-                    sx={{ mr: 1 }}
-                  >
-                    Editar
-                  </Button>
+                  <Tooltip title="Editar evento" arrow>
+                    <IconButton 
+                      color="primary" 
+                      onClick={() => onEdit?.(event._id)}
+                      size="small"
+                      sx={{ 
+                        mr: 1,
+                        '&:hover': {
+                          backgroundColor: 'primary.light',
+                          color: 'primary.contrastText'
+                        }
+                      }}
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                 )}
                 {showCancelButton && (
-                  <Button 
-                    size="small" 
-                    color="error" 
-                    onClick={() => onCancel?.(event._id)}
-                    startIcon={<CancelIcon />}
-                  >
-                    Cancelar
-                  </Button>
+                  <Tooltip title="Cancelar evento" arrow>
+                    <IconButton 
+                      color="error" 
+                      onClick={handleOpenCancelDialog}
+                      size="small"
+                      sx={{ 
+                        '&:hover': {
+                          backgroundColor: 'error.light',
+                          color: 'error.contrastText'
+                        }
+                      }}
+                    >
+                      <CancelIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                 )}
               </>
             )}
@@ -241,7 +295,9 @@ const EventCard: React.FC<EventCardProps> = ({
           fullWidth
           sx={{ 
             textTransform: 'none',
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            borderRadius: 2,
+            py: 1
           }}
         >
           Ver Detalhes
@@ -250,17 +306,85 @@ const EventCard: React.FC<EventCardProps> = ({
           <Button 
             variant="outlined" 
             color="error" 
-            onClick={() => onCancelParticipation?.(event._id)}
+            onClick={handleOpenCancelParticipationDialog}
             fullWidth
             sx={{ 
               textTransform: 'none',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              borderRadius: 2,
+              py: 1,
+              '&:hover': {
+                backgroundColor: 'error.light',
+                color: 'error.contrastText',
+                borderColor: 'error.main'
+              }
             }}
+            startIcon={<DeleteIcon />}
           >
             Cancelar Participação
           </Button>
         )}
       </Box>
+
+      {/* Confirmation Dialog for Canceling Event */}
+      <Dialog
+        open={openCancelDialog}
+        onClose={handleCloseCancelDialog}
+        aria-labelledby="cancel-dialog-title"
+        aria-describedby="cancel-dialog-description"
+      >
+        <DialogTitle id="cancel-dialog-title">
+          Cancelar Evento
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="cancel-dialog-description">
+            Tem certeza que deseja cancelar o evento "{event.title}"? Esta ação não pode ser desfeita e todos os participantes serão notificados.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseCancelDialog} color="primary">
+            Voltar
+          </Button>
+          <Button 
+            onClick={handleConfirmCancel} 
+            color="error"
+            variant="contained"
+            startIcon={<CancelIcon />}
+          >
+            Confirmar Cancelamento
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Confirmation Dialog for Canceling Participation */}
+      <Dialog
+        open={openCancelParticipationDialog}
+        onClose={handleCloseCancelParticipationDialog}
+        aria-labelledby="cancel-participation-dialog-title"
+        aria-describedby="cancel-participation-dialog-description"
+      >
+        <DialogTitle id="cancel-participation-dialog-title">
+          Cancelar Participação
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="cancel-participation-dialog-description">
+            Tem certeza que deseja cancelar sua participação no evento "{event.title}"? Se o evento tiver uma lista de espera, seu lugar pode ser ocupado por outra pessoa.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseCancelParticipationDialog} color="primary">
+            Voltar
+          </Button>
+          <Button 
+            onClick={handleConfirmCancelParticipation} 
+            color="error"
+            variant="contained"
+            startIcon={<DeleteIcon />}
+          >
+            Confirmar Cancelamento
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Card>
   );
 };
