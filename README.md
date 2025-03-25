@@ -142,7 +142,7 @@ Os arquivos otimizados serão gerados na pasta `dist/`, prontos para serem servi
 
 ## 📄 Licença
 
-Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
+Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE.txt) para detalhes.
 
 ---
 
