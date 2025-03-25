@@ -63,6 +63,7 @@ const EventsPage: React.FC = () => {
   
   // Estados para paginação e filtros
   const [page, setPage] = useState(1);
+  const [limit] = useState(9); // 9 cards por página (grid 3x3)
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<string>('active');
@@ -85,7 +86,7 @@ const EventsPage: React.FC = () => {
       try {
         const params: EventParams = {
           page,
-          limit: 9, // 9 cards por página (grid 3x3)
+          limit,
           status: filterStatus,
           sort: sortOrder
         };
@@ -122,7 +123,7 @@ const EventsPage: React.FC = () => {
     };
     
     loadEvents();
-  }, [fetchEvents, page, searchQuery, selectedCategory, filterStatus, sortOrder, freeOnly, hasAvailability, location]);
+  }, [fetchEvents, page, limit, searchQuery, selectedCategory, filterStatus, sortOrder, freeOnly, hasAvailability, location]);
 
   // Manipuladores de eventos para filtros
   const handleSearch = (event: React.FormEvent) => {
@@ -171,7 +172,7 @@ const EventsPage: React.FC = () => {
   const clearFilters = () => {
     setSearchQuery('');
     setSelectedCategory('');
-    setFilterStatus('ativo');
+    setFilterStatus('active');
     setSortOrder('date_asc');
     setFreeOnly(false);
     setHasAvailability(false);
@@ -361,7 +362,16 @@ const EventsPage: React.FC = () => {
           
           {/* Paginação */}
           {pagination.pages > 1 && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'column',
+              alignItems: 'center', 
+              mt: 4,
+              gap: 2
+            }}>
+              <Typography variant="body2" color="text.secondary">
+                Mostrando {events.length} de {pagination.total} eventos
+              </Typography>
               <Pagination 
                 count={pagination.pages} 
                 page={page} 
@@ -369,6 +379,14 @@ const EventsPage: React.FC = () => {
                 color="primary" 
                 showFirstButton
                 showLastButton
+                size="large"
+                sx={{
+                  '& .MuiPaginationItem-root': {
+                    fontSize: '1rem',
+                    minWidth: '40px',
+                    height: '40px'
+                  }
+                }}
               />
             </Box>
           )}

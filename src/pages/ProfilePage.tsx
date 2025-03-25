@@ -325,9 +325,9 @@ const ProfilePage: React.FC = () => {
     <EventCard 
       key={event._id}
       event={event}
-      showEditButton={event.status !== 'cancelado' && event.approvalStatus === 'approved'}
-      showCancelButton={event.status !== 'cancelado' && event.approvalStatus === 'approved'}
-      showCancelParticipationButton={event.status !== 'cancelado' && isParticipatingTab}
+      showEditButton={!isParticipatingTab && event.status !== 'canceled' && event.approvalStatus === 'approved'}
+      showCancelButton={!isParticipatingTab && event.status !== 'canceled' && event.approvalStatus === 'approved'}
+      showCancelParticipationButton={event.status !== 'canceled' && isParticipatingTab}
       onEdit={() => navigate(`/events/edit/${event._id}`)}
       onCancel={() => handleCancelEvent(event._id)}
       onCancelParticipation={() => handleCancelParticipation(event._id)}
@@ -533,7 +533,6 @@ const ProfilePage: React.FC = () => {
               <Tabs value={tabValue} onChange={handleTabChange} aria-label="Abas do perfil">
                 <Tab label="Meus Eventos" id="profile-tab-0" aria-controls="profile-tabpanel-0" />
                 <Tab label="Eventos Participando" id="profile-tab-1" aria-controls="profile-tabpanel-1" />
-                <Tab label="Atividade Recente" id="profile-tab-2" aria-controls="profile-tabpanel-2" />
               </Tabs>
             </Box>
 
@@ -582,11 +581,6 @@ const ProfilePage: React.FC = () => {
               ) : (
                 renderEmptyState("Você ainda não está participando de nenhum evento")
               )}
-            </TabPanel>
-
-            <TabPanel value={tabValue} index={2}>
-              {/* Atividade recente */}
-              {renderEmptyState("Nenhuma atividade recente para mostrar")}
             </TabPanel>
           </Paper>
         </Grid>

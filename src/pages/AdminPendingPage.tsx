@@ -27,7 +27,8 @@ import {
   Check as CheckIcon,
   Close as CloseIcon,
   Visibility as VisibilityIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
+  PendingActions as PendingActionsIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -197,6 +198,18 @@ const AdminPendingPage: React.FC = () => {
       <AdminNavigation />
 
       <Paper sx={{ p: 3, borderRadius: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+          <Typography variant="h5" component="h2">
+            Lista de Eventos Pendentes
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            Pendentes
+            <PendingActionsIcon color="primary" />
+            <Typography variant="h6" color="primary">
+              {events.length}
+            </Typography>
+          </Box>
+        </Box>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
             <CircularProgress />

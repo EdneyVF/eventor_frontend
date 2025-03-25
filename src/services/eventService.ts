@@ -96,6 +96,7 @@ export interface EventQueryParams {
   approvalStatus?: string;
   when?: string;
   organizer?: string;
+  all?: boolean;
 }
 
 // Buscar lista de eventos com paginação e filtros
@@ -215,6 +216,7 @@ export interface MyEventsResponse {
   counts: {
     total: number;
     active: number;
+    inactive: number;
     canceled: number;
     finished: number;
     pending: number;

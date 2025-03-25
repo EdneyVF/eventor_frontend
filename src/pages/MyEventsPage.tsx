@@ -5,7 +5,6 @@ import {
   Box, 
   Paper,
   Grid,
-  Chip,
   Button,
   Tab,
   Tabs,
@@ -20,7 +19,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  SelectChangeEvent
+  SelectChangeEvent,
+  Chip
 } from '@mui/material';
 import {
   Event as EventIcon,
@@ -77,7 +77,9 @@ const MyEventsPage: React.FC = () => {
     counts,
     pagination,
     fetchMyEvents,
-    cancelEvent
+    fetchParticipatingEvents,
+    cancelEvent,
+    cancelEventParticipation
   } = useEvents();
 
   // Estado para o diálogo de confirmação
@@ -125,10 +127,10 @@ const MyEventsPage: React.FC = () => {
       } else if (statusFilter === 'past') {
         params.when = 'past';
       } else if (statusFilter === 'canceled') {
-        params.status = 'cancelado';
+        params.status = 'canceled';
       }
       
-      fetchMyEvents(params)
+      fetchParticipatingEvents(params)
         .then(data => {
           setParticipatingEvents(data);
         })
@@ -140,7 +142,7 @@ const MyEventsPage: React.FC = () => {
           });
         });
     }
-  }, [tabValue, page, limit, statusFilter, fetchMyEvents]);
+  }, [tabValue, page, limit, statusFilter, fetchParticipatingEvents]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -170,22 +172,44 @@ const MyEventsPage: React.FC = () => {
             }
             const data = await fetchMyEvents(params);
             setCreatedEvents(data);
-          } else {
-            const params: EventQueryParams = { page, limit };
-            if (statusFilter === 'future') {
-              params.when = 'future';
-            } else if (statusFilter === 'past') {
-              params.when = 'past';
-            } else if (statusFilter === 'canceled') {
-              params.status = 'cancelado';
-            }
-            const data = await fetchMyEvents(params);
-            setParticipatingEvents(data);
           }
         } catch {
           setAlert({
             type: 'error',
             message: 'Erro ao cancelar evento. Tente novamente.'
+          });
+        }
+      }
+    });
+  };
+
+  const handleCancelParticipation = async (eventId: string) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Cancelar Participação',
+      message: 'Tem certeza que deseja cancelar sua participação neste evento?',
+      action: async () => {
+        try {
+          await cancelEventParticipation(eventId);
+          setAlert({
+            type: 'success',
+            message: 'Participação cancelada com sucesso!'
+          });
+          // Recarregar eventos da aba de participação
+          const params: EventQueryParams = { page, limit };
+          if (statusFilter === 'future') {
+            params.when = 'future';
+          } else if (statusFilter === 'past') {
+            params.when = 'past';
+          } else if (statusFilter === 'canceled') {
+            params.status = 'canceled';
+          }
+          const data = await fetchParticipatingEvents(params);
+          setParticipatingEvents(data);
+        } catch {
+          setAlert({
+            type: 'error',
+            message: 'Erro ao cancelar participação. Tente novamente.'
           });
         }
       }
@@ -284,30 +308,12 @@ const MyEventsPage: React.FC = () => {
           </FormControl>
         </Box>
         
+        {/* Usando condicionais para evitar erros quando as propriedades não existem */}
         <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
-          {counts?.upcoming !== undefined && (
-            <Chip 
-              label={`Próximos: ${counts.upcoming}`} 
-              size="small" 
-              color="success" 
-              variant="outlined" 
-            />
-          )}
-          {counts?.past !== undefined && (
-            <Chip 
-              label={`Passados: ${counts.past}`} 
-              size="small" 
-              color="primary" 
-              variant="outlined" 
-            />
-          )}
-          {counts?.canceled !== undefined && (
-            <Chip 
-              label={`Cancelados: ${counts.canceled}`} 
-              size="small" 
-              color="error" 
-              variant="outlined" 
-            />
+          {pagination && (
+            <Typography variant="body2" color="text.secondary">
+              Mostrando {participatingEvents.length} de {pagination.total} eventos
+            </Typography>
           )}
         </Box>
       </Box>
@@ -452,7 +458,7 @@ const MyEventsPage: React.FC = () => {
                     <EventCard
                       event={event}
                       showCancelParticipationButton={true}
-                      onCancelParticipation={handleCancelEvent}
+                      onCancelParticipation={handleCancelParticipation}
                     />
                   </Grid>
                 ))}
@@ -460,13 +466,31 @@ const MyEventsPage: React.FC = () => {
               
               {/* Paginação */}
               {pagination?.pages > 1 && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: 'column',
+                  alignItems: 'center', 
+                  mt: 4,
+                  gap: 2
+                }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Mostrando {participatingEvents.length} de {pagination.total} eventos
+                  </Typography>
                   <Pagination 
                     count={pagination.pages} 
                     page={page} 
                     onChange={handlePageChange} 
                     color="primary" 
+                    showFirstButton
+                    showLastButton
                     size="large"
+                    sx={{
+                      '& .MuiPaginationItem-root': {
+                        fontSize: '1rem',
+                        minWidth: '40px',
+                        height: '40px'
+                      }
+                    }}
                   />
                 </Box>
               )}

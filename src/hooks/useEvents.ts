@@ -5,9 +5,6 @@ import {
   EventCreateData, 
   EventUpdateData,
   EventQueryParams,
-  PendingEventsResponse,
-  getEvents, 
-  createEvent as apiCreateEvent, 
   updateEvent as apiUpdateEvent, 
   deleteEvent as apiDeleteEvent,
   approveEvent as apiApproveEvent,
@@ -30,6 +27,7 @@ interface UseEventsState {
   counts: {
     total: number;
     active: number;
+    inactive: number;
     canceled: number;
     finished: number;
     pending: number;
@@ -58,6 +56,7 @@ export const useEvents = () => {
     counts: {
       total: 0,
       active: 0,
+      inactive: 0,
       canceled: 0,
       finished: 0,
       pending: 0,
@@ -151,12 +150,12 @@ export const useEvents = () => {
   const createEvent = useCallback(async (data: EventCreateData) => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
-      const response = await getEvents(data);
+      const response = await eventService.createEvent(data);
       setState(prev => ({
         ...prev,
         loading: false,
         success: true,
-        events: [response.event, ...prev.events]
+        events: response.event ? [response.event, ...prev.events] : prev.events
       }));
       return response;
     } catch (error) {
@@ -320,7 +319,16 @@ export const useEvents = () => {
           pages: response.pages,
           total: response.total
         },
-        counts: response.counts || {}
+        counts: {
+          total: response.counts?.upcoming + response.counts?.past + response.counts?.canceled || 0,
+          active: response.counts?.upcoming || 0,
+          inactive: 0,
+          canceled: response.counts?.canceled || 0,
+          finished: response.counts?.past || 0,
+          pending: 0,
+          approved: 0,
+          rejected: 0
+        }
       }));
       return response.events;
     } catch (error) {
@@ -433,6 +441,7 @@ export const useEvents = () => {
       counts: {
         total: 0,
         active: 0,
+        inactive: 0,
         canceled: 0,
         finished: 0,
         pending: 0,
