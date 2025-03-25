@@ -1,51 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Container, 
-  Paper, 
   Typography, 
   Box, 
-  Grid, 
-  Avatar, 
-  Button, 
-  TextField, 
-  Divider,
+  Paper,
+  Grid,
+  Chip,
+  Button,
+  CircularProgress,
+  Alert,
   Tabs,
   Tab,
-  Card,
-  CardContent,
-  CardMedia,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
-  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Snackbar,
-  Alert,
-  CircularProgress
+  Divider,
+  Avatar,
+  TextField,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
+  Snackbar
 } from '@mui/material';
 import {
   Edit as EditIcon,
-  Save as SaveIcon,
   Cancel as CancelIcon,
   Event as EventIcon,
   Lock as LockIcon,
   Phone as PhoneIcon,
   Email as EmailIcon,
   Info as InfoIcon,
-  LocationOn as LocationIcon,
-  Person as PersonIcon,
-  AttachMoney as AttachMoneyIcon
+  Save as SaveIcon
 } from '@mui/icons-material';
-import { useAuth } from '../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import { useEvents } from '../hooks/useEvents';
+import { useAuth } from '../hooks/useAuth';
 import * as authService from '../services/authService';
 import { Event } from '../services/eventService';
-import defaultEventImage from '../assets/images/default-event.svg';
-import { useNavigate } from 'react-router-dom';
+import EventCard from '../components/common/EventCard';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -266,32 +260,6 @@ const ProfilePage: React.FC = () => {
     </Box>
   );
 
-  // Formatar data para exibição
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
-  };
-
-  // Formatar localização
-  const formatLocation = (location: { city: string; state: string }) => {
-    return `${location.city}, ${location.state}`;
-  };
-
-  // Formatar preço
-  const formatPrice = (price: number) => {
-    if (price === 0) return 'Gratuito';
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(price);
-  };
-
   // Manipular cancelamento de evento
   const handleCancelEvent = async (eventId: string) => {
     setConfirmDialog({
@@ -354,152 +322,16 @@ const ProfilePage: React.FC = () => {
 
   // Renderizar card de evento
   const renderEventCard = (event: Event, isParticipatingTab: boolean = false) => (
-    <Card key={event._id} sx={{ 
-      height: '100%', 
-      display: 'flex', 
-      flexDirection: 'column',
-      opacity: event.status === 'cancelado' ? 0.7 : 1
-    }}>
-      <Box sx={{ position: 'relative' }}>
-        <CardMedia
-          component="img"
-          height="180"
-          image={event.imageUrl || defaultEventImage}
-          alt={event.title}
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.src = defaultEventImage;
-          }}
-        />
-        {event.status === 'cancelado' && (
-          <Box sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <Chip 
-              label="CANCELADO" 
-              color="error" 
-              sx={{ fontWeight: 'bold', fontSize: '1rem' }}
-            />
-          </Box>
-        )}
-      </Box>
-      <CardContent sx={{ flexGrow: 1 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-          <Typography variant="h6" component="h2" gutterBottom sx={{ fontWeight: 'bold' }}>
-            {event.title}
-          </Typography>
-          <Chip 
-            label={event.category.name} 
-            size="small" 
-            color="primary" 
-            sx={{ ml: 1 }}
-          />
-        </Box>
-        <Typography variant="body2" color="text.secondary" paragraph>
-          {event.description.length > 120 
-            ? `${event.description.substring(0, 120)}...` 
-            : event.description}
-        </Typography>
-
-        <Divider sx={{ mb: 2 }} />
-        
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <EventIcon color="action" fontSize="small" sx={{ mr: 1 }} />
-          <Typography variant="body2" color="text.secondary">
-            {formatDate(event.date)}
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <LocationIcon color="action" fontSize="small" sx={{ mr: 1 }} />
-          <Typography variant="body2" color="text.secondary">
-            {formatLocation(event.location)}
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <PersonIcon color="action" fontSize="small" sx={{ mr: 1 }} />
-          <Typography variant="body2" color="text.secondary">
-            {event.participantsCount || 0}/{event.capacity} participantes
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <AttachMoneyIcon color="action" fontSize="small" sx={{ mr: 1 }} />
-          <Typography variant="body2" color={event.price === 0 ? "success.main" : "text.secondary"} fontWeight={event.price === 0 ? "bold" : "normal"}>
-            {formatPrice(event.price)}
-          </Typography>
-        </Box>
-        
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Chip 
-              label={`${event.approvalStatus === 'approved' ? 'Aprovado' : 
-                     event.approvalStatus === 'rejected' ? 'Rejeitado' : 'Pendente'}`} 
-              size="small" 
-              color={event.approvalStatus === 'approved' ? "success" : 
-                     event.approvalStatus === 'rejected' ? "error" : "warning"} 
-              variant="outlined"
-            />
-            <Chip 
-              label={event.status === 'ativo' ? 'Ativo' :
-                     event.status === 'inativo' ? 'Inativo' :
-                     event.status === 'cancelado' ? 'Cancelado' : 'Finalizado'}
-              size="small"
-              color={event.status === 'ativo' ? "success" :
-                     event.status === 'inativo' ? "warning" :
-                     event.status === 'cancelado' ? "error" : "secondary"}
-              variant="outlined"
-            />
-          </Box>
-          <Box>
-            {event.status !== 'cancelado' && event.approvalStatus === 'approved' && (
-              <>
-                <Button 
-                  size="small" 
-                  color="primary" 
-                  onClick={() => navigate(`/events/edit/${event._id}`)}
-                  startIcon={<EditIcon />}
-                >
-                  Editar
-                </Button>
-                <Button 
-                  size="small" 
-                  color="error" 
-                  onClick={() => handleCancelEvent(event._id)}
-                  startIcon={<CancelIcon />}
-                  sx={{ ml: 1 }}
-                >
-                  Cancelar
-                </Button>
-              </>
-            )}
-          </Box>
-        </Box>
-      </CardContent>
-      <Box sx={{ p: 2, pt: 0, display: 'flex', justifyContent: 'space-between' }}>
-        <Button 
-          variant="outlined" 
-          color="primary" 
-          onClick={() => navigate(`/events/${event._id}`)}
-        >
-          Ver Detalhes
-        </Button>
-        {event.status !== 'cancelado' && isParticipatingTab && (
-          <Button 
-            variant="outlined" 
-            color="error" 
-            onClick={() => handleCancelParticipation(event._id)}
-          >
-            Cancelar Participação
-          </Button>
-        )}
-      </Box>
-    </Card>
+    <EventCard 
+      key={event._id}
+      event={event}
+      showEditButton={event.status !== 'cancelado' && event.approvalStatus === 'approved'}
+      showCancelButton={event.status !== 'cancelado' && event.approvalStatus === 'approved'}
+      showCancelParticipationButton={event.status !== 'cancelado' && isParticipatingTab}
+      onEdit={() => navigate(`/events/edit/${event._id}`)}
+      onCancel={() => handleCancelEvent(event._id)}
+      onCancelParticipation={() => handleCancelParticipation(event._id)}
+    />
   );
 
   if (!user) {
@@ -720,7 +552,7 @@ const ProfilePage: React.FC = () => {
                 <Grid container spacing={2}>
                   {userEvents.map((event) => (
                     <Grid item xs={12} sm={6} key={event._id}>
-                      {renderEventCard(event, false)}
+                      {renderEventCard(event)}
                     </Grid>
                   ))}
                 </Grid>

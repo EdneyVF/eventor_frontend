@@ -20,10 +20,10 @@ export interface CategoryStats {
   totalParticipants: number;
   avgParticipantsPerEvent: number;
   eventsByStatus: {
-    ativo: number;
-    inativo: number;
-    cancelado: number;
-    finalizado: number;
+    active: number;
+    inactive: number;
+    canceled: number;
+    finished: number;
   };
 }
 

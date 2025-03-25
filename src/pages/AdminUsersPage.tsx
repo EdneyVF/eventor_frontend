@@ -168,7 +168,7 @@ const AdminUsersPage: React.FC = () => {
   // Ações para usuários
   const handleViewUserProfile = () => {
     if (selectedUserId) {
-      navigate(`/admin/users/${selectedUserId}`);
+      navigate(`/profile/${selectedUserId}`);
     }
     handleMenuClose();
   };

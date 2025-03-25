@@ -149,14 +149,14 @@ const AdminDashboardPage: React.FC = () => {
   // Ações para eventos
   const handleViewEvent = () => {
     if (selectedEventId) {
-      navigate(`/admin/events/${selectedEventId}`);
+      navigate(`/events/${selectedEventId}`);
     }
     handleMenuClose();
   };
 
   const handleEditEvent = () => {
     if (selectedEventId) {
-      navigate(`/admin/events/edit/${selectedEventId}`);
+      navigate(`/events/edit/${selectedEventId}`);
     }
     handleMenuClose();
   };
@@ -279,13 +279,13 @@ const AdminDashboardPage: React.FC = () => {
   // Renderizar chips de status
   const renderStatusChip = (status: string) => {
     switch (status) {
-      case 'ativo':
+      case 'active':
         return <Chip size="small" label="Ativo" color="success" />;
-      case 'inativo':
+      case 'inactive':
         return <Chip size="small" label="Inativo" color="warning" />;
-      case 'cancelado':
+      case 'canceled':
         return <Chip size="small" label="Cancelado" color="error" />;
-      case 'finalizado':
+      case 'finished':
         return <Chip size="small" label="Finalizado" color="secondary" />;
       default:
         return <Chip size="small" label={status} />;
@@ -336,10 +336,10 @@ const AdminDashboardPage: React.FC = () => {
                 onChange={handleStatusFilterChange}
               >
                 <MenuItem value="all">Todos</MenuItem>
-                <MenuItem value="ativo">Ativos</MenuItem>
-                <MenuItem value="inativo">Inativos</MenuItem>
-                <MenuItem value="cancelado">Cancelados</MenuItem>
-                <MenuItem value="finalizado">Finalizados</MenuItem>
+                <MenuItem value="active">Ativos</MenuItem>
+                <MenuItem value="inactive">Inativos</MenuItem>
+                <MenuItem value="canceled">Cancelados</MenuItem>
+                <MenuItem value="finished">Finalizados</MenuItem>
               </Select>
             </FormControl>
 

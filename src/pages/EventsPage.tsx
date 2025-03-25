@@ -26,7 +26,6 @@ import {
   Event as EventIcon,
   LocationOn as LocationIcon
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
 import { useEvents } from '../hooks/useEvents';
 import { useCategories } from '../hooks/useCategories';
 import EventCard from '../components/common/EventCard';
@@ -45,7 +44,6 @@ interface EventParams {
 }
 
 const EventsPage: React.FC = () => {
-  const navigate = useNavigate();
   
   // Hook para eventos
   const { 
@@ -67,7 +65,7 @@ const EventsPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [filterStatus, setFilterStatus] = useState<string>('ativo');
+  const [filterStatus, setFilterStatus] = useState<string>('active');
   const [sortOrder, setSortOrder] = useState<string>('date_asc');
   const [freeOnly, setFreeOnly] = useState(false);
   const [hasAvailability, setHasAvailability] = useState(false);

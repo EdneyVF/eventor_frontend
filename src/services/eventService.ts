@@ -9,11 +9,12 @@ const EVENT_ROUTES = {
   approve: (id: string) => `/api/events/${id}/approve`,
   reject: (id: string) => `/api/events/${id}/reject`,
   cancelEvent: (id: string) => `/api/events/${id}/cancel`,
-  pending: '/api/events/pending',
+  pending: '/api/events/approval/pending',
   myEvents: '/api/events/my-events',
   participating: '/api/events/participating',
   participate: (id: string) => `/api/events/${id}/participate`,
   cancelParticipation: (id: string) => `/api/events/${id}/participate`,
+  approvalStatus: (id: string) => `/api/events/${id}/approval-status`,
 };
 
 // Interfaces
@@ -46,7 +47,7 @@ export interface Event {
   capacity: number;
   price: number;
   organizer: EventOrganizer;
-  status: 'ativo' | 'inativo' | 'cancelado' | 'finalizado';
+  status: 'active' | 'inactive' | 'canceled' | 'finished';
   approvalStatus: 'pending' | 'approved' | 'rejected';
   isFullyBooked: boolean;
   participantsCount: number;
@@ -94,6 +95,7 @@ export interface EventQueryParams {
   sort?: string;
   approvalStatus?: string;
   when?: string;
+  organizer?: string;
 }
 
 // Buscar lista de eventos com paginação e filtros
@@ -102,9 +104,39 @@ export const getEvents = async (params: EventQueryParams = {}) => {
   return response.data;
 };
 
+// Interface para resposta de eventos pendentes
+export interface PendingEventsResponse {
+  success: boolean;
+  count: number;
+  events: Array<{
+    id: string;
+    title: string;
+    organizer: {
+      name: string;
+      email: string;
+    };
+    category: {
+      name: string;
+    };
+  }>;
+}
+
+// Interface para resposta de status de aprovação
+export interface ApprovalStatusResponse {
+  success: boolean;
+  data: {
+    approvalStatus: 'pending' | 'approved' | 'rejected';
+    approvedBy?: {
+      name: string;
+    };
+    approvalDate?: Date;
+    rejectionReason?: string;
+  };
+}
+
 // Buscar eventos pendentes de aprovação (apenas para admin)
-export const getPendingEvents = async () => {
-  const response = await api.get<Event[]>(EVENT_ROUTES.pending);
+export const listPendingEvents = async () => {
+  const response = await api.get<PendingEventsResponse>(EVENT_ROUTES.pending);
   return response.data;
 };
 
@@ -123,7 +155,7 @@ export const createEvent = async (data: EventCreateData) => {
     event: {
       ...response.data,
       approvalStatus: 'pending',
-      status: 'inativo'
+      status: 'inactive'
     }
   };
 };
@@ -137,7 +169,7 @@ export const updateEvent = async (id: string, data: EventUpdateData) => {
     event: {
       ...response.data,
       approvalStatus: 'pending',
-      status: 'inativo'
+      status: 'inactive'
     }
   };
 };
@@ -150,30 +182,22 @@ export const deleteEvent = async (id: string) => {
 
 // Aprovar um evento (apenas para admin)
 export const approveEvent = async (id: string) => {
-  const response = await api.put(EVENT_ROUTES.approve(id));
-  return {
-    success: true,
-    message: 'Evento aprovado com sucesso!',
-    event: {
-      ...response.data,
-      approvalStatus: 'approved',
-      status: 'ativo'
-    }
-  };
+  const response = await api.put<{
+    success: boolean;
+    message: string;
+    event: Event;
+  }>(EVENT_ROUTES.approve(id));
+  return response.data;
 };
 
 // Rejeitar um evento (apenas para admin)
 export const rejectEvent = async (id: string, reason: string) => {
-  const response = await api.put(EVENT_ROUTES.reject(id), { reason });
-  return {
-    success: true,
-    message: 'Evento rejeitado com sucesso!',
-    event: {
-      ...response.data,
-      approvalStatus: 'rejected',
-      status: 'inativo'
-    }
-  };
+  const response = await api.put<{
+    success: boolean;
+    message: string;
+    event: Event;
+  }>(EVENT_ROUTES.reject(id), { reason });
+  return response.data;
 };
 
 // Cancelar um evento
@@ -233,5 +257,11 @@ export const participateInEvent = async (id: string) => {
 // Cancelar participação em um evento
 export const cancelParticipation = async (id: string) => {
   const response = await api.delete(EVENT_ROUTES.cancelParticipation(id));
+  return response.data;
+};
+
+// Obter status de aprovação de um evento
+export const getApprovalStatus = async (id: string) => {
+  const response = await api.get<ApprovalStatusResponse>(EVENT_ROUTES.approvalStatus(id));
   return response.data;
 }; 

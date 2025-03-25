@@ -12,7 +12,8 @@ import {
 import {
   Category as CategoryIcon,
   People as PeopleIcon,
-  Event as EventIcon
+  Pending as PendingIcon,
+  Dashboard as DashboardIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -23,9 +24,15 @@ const AdminNavigation: React.FC = () => {
   
   const navigationItems = [
     { 
-      text: 'Eventos', 
-      icon: <EventIcon />, 
+      text: 'Dashboard', 
+      icon: <DashboardIcon />, 
       path: '/admin',
+      exact: true
+    },
+    { 
+      text: 'Eventos Pendentes', 
+      icon: <PendingIcon />, 
+      path: '/admin/pending',
       exact: true
     },
     { 

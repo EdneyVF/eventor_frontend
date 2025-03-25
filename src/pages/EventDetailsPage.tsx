@@ -290,7 +290,7 @@ const EventDetailsPage: React.FC = () => {
               target.src = defaultEventImage;
             }}
           />
-          {(event.status === 'cancelado' || event.status === 'inativo') && (
+          {(event.status === 'canceled' || event.status === 'inactive') && (
             <Box sx={{
               position: 'absolute',
               top: 0,
@@ -303,8 +303,8 @@ const EventDetailsPage: React.FC = () => {
               bgcolor: 'rgba(0, 0, 0, 0.5)'
             }}>
               <Chip 
-                label={event.status === 'cancelado' ? 'CANCELADO' : 'INATIVO'} 
-                color={event.status === 'cancelado' ? "error" : "warning"} 
+                label={event.status === 'canceled' ? 'CANCELADO' : 'INATIVO'} 
+                color={event.status === 'canceled' ? "error" : "warning"} 
                 sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}
               />
             </Box>
@@ -326,7 +326,7 @@ const EventDetailsPage: React.FC = () => {
                     <ShareIcon />
                   </IconButton>
                 </Tooltip>
-                {isOrganizer && event.status !== 'cancelado' && (
+                {isOrganizer && event.status !== 'canceled' && (
                   <>
                     <Tooltip title="Editar">
                       <IconButton onClick={handleEditEvent} color="primary">
@@ -467,7 +467,7 @@ const EventDetailsPage: React.FC = () => {
 
               <Divider sx={{ my: 2 }} />
 
-              {event.status !== 'cancelado' && (
+              {event.status !== 'canceled' && (
                 <Box sx={{ mt: 2 }}>
                   {isOrganizer ? (
                     <Button 

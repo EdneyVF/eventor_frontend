@@ -4,7 +4,16 @@ import {
   Event, 
   EventCreateData, 
   EventUpdateData,
-  EventQueryParams
+  EventQueryParams,
+  PendingEventsResponse,
+  getEvents, 
+  createEvent as apiCreateEvent, 
+  updateEvent as apiUpdateEvent, 
+  deleteEvent as apiDeleteEvent,
+  approveEvent as apiApproveEvent,
+  rejectEvent as apiRejectEvent,
+  listPendingEvents,
+  getEventById
 } from '../services/eventService';
 
 interface UseEventsState {
@@ -19,20 +28,19 @@ interface UseEventsState {
     total: number;
   };
   counts: {
-    // Para eventos criados pelo usuário
-    total?: number;
-    active?: number;
-    inactive?: number;
-    canceled?: number;
-    finished?: number;
-    pending?: number;
-    approved?: number;
-    rejected?: number;
-    
-    // Para eventos que o usuário participa
-    upcoming?: number;
-    past?: number;
+    total: number;
+    active: number;
+    canceled: number;
+    finished: number;
+    pending: number;
+    approved: number;
+    rejected: number;
   };
+}
+
+export interface ApiError {
+  message: string;
+  status?: number;
 }
 
 export const useEvents = () => {
@@ -47,7 +55,15 @@ export const useEvents = () => {
       pages: 1,
       total: 0
     },
-    counts: {}
+    counts: {
+      total: 0,
+      active: 0,
+      canceled: 0,
+      finished: 0,
+      pending: 0,
+      approved: 0,
+      rejected: 0
+    }
   });
 
   // Buscar lista de eventos
@@ -81,25 +97,29 @@ export const useEvents = () => {
 
   // Buscar eventos pendentes (admin)
   const fetchPendingEvents = useCallback(async () => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
     try {
-      setState(prev => ({ ...prev, loading: true, error: null }));
-      const events = await eventService.getPendingEvents();
+      const response = await listPendingEvents();
       setState(prev => ({
         ...prev,
-        events,
+        events: response.events.map(event => ({
+          _id: event.id,
+          title: event.title,
+          organizer: event.organizer,
+          category: event.category
+        } as Event)),
         loading: false,
         success: true
       }));
-      return events;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro ao buscar eventos pendentes';
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 
+        (err as ApiError)?.message || 'Erro ao carregar eventos pendentes';
       setState(prev => ({
         ...prev,
         loading: false,
         error: errorMessage,
         success: false
       }));
-      throw error;
     }
   }, []);
 
@@ -107,7 +127,7 @@ export const useEvents = () => {
   const fetchEventById = useCallback(async (id: string) => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
-      const event = await eventService.getEventById(id);
+      const event = await getEventById(id);
       setState(prev => ({
         ...prev,
         event,
@@ -131,7 +151,7 @@ export const useEvents = () => {
   const createEvent = useCallback(async (data: EventCreateData) => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
-      const response = await eventService.createEvent(data);
+      const response = await getEvents(data);
       setState(prev => ({
         ...prev,
         loading: false,
@@ -155,17 +175,17 @@ export const useEvents = () => {
   const updateEvent = useCallback(async (id: string, data: EventUpdateData) => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
-      const result = await eventService.updateEvent(id, data);
+      const result = await apiUpdateEvent(id, data);
       setState(prev => ({
         ...prev,
         loading: false,
         success: true,
         // Atualizar o status do evento na lista
         events: prev.events.map(e => 
-          e._id === id ? { ...e, ...result, approvalStatus: 'pending', status: 'inativo' } : e
+          e._id === id ? { ...e, ...result, approvalStatus: 'pending', status: 'inactive' } : e
         ),
         event: prev.event?._id === id 
-          ? { ...prev.event, ...result, approvalStatus: 'pending', status: 'inativo' } 
+          ? { ...prev.event, ...result, approvalStatus: 'pending', status: 'inactive' } 
           : prev.event
       }));
       return result;
@@ -185,7 +205,7 @@ export const useEvents = () => {
   const deleteEvent = useCallback(async (id: string) => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
-      const result = await eventService.deleteEvent(id);
+      const result = await apiDeleteEvent(id);
       setState(prev => ({
         ...prev,
         loading: false,
@@ -207,63 +227,51 @@ export const useEvents = () => {
     }
   }, []);
 
-  // Aprovar evento (admin)
-  const approveEvent = useCallback(async (id: string) => {
+  // Aprovar evento
+  const handleApproveEvent = useCallback(async (id: string) => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
     try {
-      setState(prev => ({ ...prev, loading: true, error: null }));
-      const result = await eventService.approveEvent(id);
+      const result = await apiApproveEvent(id);
       setState(prev => ({
         ...prev,
         loading: false,
-        success: true,
-        // Atualizar o status do evento na lista
-        events: prev.events.map(e => 
-          e._id === id ? { ...e, approvalStatus: 'approved', status: 'ativo' } : e
-        ),
-        event: prev.event?._id === id 
-          ? { ...prev.event, approvalStatus: 'approved', status: 'ativo' } 
-          : prev.event
+        success: true
       }));
       return result;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro ao aprovar evento';
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 
+        (err as ApiError)?.message || 'Erro ao aprovar evento';
       setState(prev => ({
         ...prev,
         loading: false,
         error: errorMessage,
         success: false
       }));
-      throw error;
+      throw err;
     }
   }, []);
 
-  // Rejeitar evento (admin)
-  const rejectEvent = useCallback(async (id: string, reason: string) => {
+  // Rejeitar evento
+  const handleRejectEvent = useCallback(async (id: string, reason: string) => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
     try {
-      setState(prev => ({ ...prev, loading: true, error: null }));
-      const result = await eventService.rejectEvent(id, reason);
+      const result = await apiRejectEvent(id, reason);
       setState(prev => ({
         ...prev,
         loading: false,
-        success: true,
-        // Atualizar o status do evento na lista
-        events: prev.events.map(e => 
-          e._id === id ? { ...e, approvalStatus: 'rejected', status: 'inativo' } : e
-        ),
-        event: prev.event?._id === id 
-          ? { ...prev.event, approvalStatus: 'rejected', status: 'inativo' } 
-          : prev.event
+        success: true
       }));
       return result;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro ao rejeitar evento';
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 
+        (err as ApiError)?.message || 'Erro ao rejeitar evento';
       setState(prev => ({
         ...prev,
         loading: false,
         error: errorMessage,
         success: false
       }));
-      throw error;
+      throw err;
     }
   }, []);
 
@@ -363,10 +371,10 @@ export const useEvents = () => {
         success: true,
         // Atualizar o status do evento na lista
         events: prev.events.map(e => 
-          e._id === id ? { ...e, status: 'cancelado' } : e
+          e._id === id ? { ...e, status: 'canceled' } : e
         ),
         event: prev.event?._id === id 
-          ? { ...prev.event, status: 'cancelado' } 
+          ? { ...prev.event, status: 'canceled' } 
           : prev.event
       }));
       return result;
@@ -422,7 +430,15 @@ export const useEvents = () => {
         pages: 1,
         total: 0
       },
-      counts: {}
+      counts: {
+        total: 0,
+        active: 0,
+        canceled: 0,
+        finished: 0,
+        pending: 0,
+        approved: 0,
+        rejected: 0
+      }
     });
   }, []);
 
@@ -439,8 +455,8 @@ export const useEvents = () => {
     createEvent,
     updateEvent,
     deleteEvent,
-    approveEvent,
-    rejectEvent,
+    approveEvent: handleApproveEvent,
+    rejectEvent: handleRejectEvent,
     fetchMyEvents,
     fetchParticipatingEvents,
     participateInEvent,
@@ -449,4 +465,6 @@ export const useEvents = () => {
     clearState,
     clearError
   };
-}; 
+};
+
+export default useEvents; 

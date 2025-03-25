@@ -194,13 +194,13 @@ const EventCard: React.FC<EventCardProps> = ({
               variant="outlined"
             />
             <Chip 
-              label={event.status === 'ativo' ? 'Ativo' :
-                     event.status === 'inativo' ? 'Inativo' :
-                     event.status === 'cancelado' ? 'Cancelado' : 'Finalizado'}
+              label={event.status === 'active' ? 'Ativo' :
+                     event.status === 'inactive' ? 'Inativo' :
+                     event.status === 'canceled' ? 'Cancelado' : 'Finalizado'}
               size="small"
-              color={event.status === 'ativo' ? "success" :
-                     event.status === 'inativo' ? "warning" :
-                     event.status === 'cancelado' ? "error" : "secondary"}
+              color={event.status === 'active' ? "success" :
+                     event.status === 'inactive' ? "warning" :
+                     event.status === 'canceled' ? "error" : "secondary"}
               variant="outlined"
             />
           </Box>
@@ -235,7 +235,7 @@ const EventCard: React.FC<EventCardProps> = ({
       </CardContent>
       <Box sx={{ p: 3, pt: 0, display: 'flex', gap: 2 }}>
         <Button 
-          variant="outlined" 
+          variant="contained" 
           color="primary" 
           onClick={() => navigate(`/events/${event._id}`)}
           fullWidth

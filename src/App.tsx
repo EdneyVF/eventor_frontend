@@ -61,6 +61,7 @@ const theme = createTheme({
 
 // Páginas com lazy loading
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const UserProfilePage = lazy(() => import('./pages/UserProfilePage'));
 const EventsPage = lazy(() => import('./pages/EventsPage'));
 const MyEventsPage = lazy(() => import('./pages/MyEventsPage'));
 const CreateEventPage = lazy(() => import('./pages/CreateEventPage'));
@@ -68,6 +69,7 @@ const EventDetailsPage = lazy(() => import('./pages/EventDetailsPage'));
 
 // Páginas de admin com lazy loading
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
+const AdminPendingPage = lazy(() => import('./pages/AdminPendingPage'));
 const AdminCategoriesPage = lazy(() => import('./pages/AdminCategoriesPage'));
 const AdminUsersPage = lazy(() => import('./pages/AdminUsersPage'));
 
@@ -122,13 +124,16 @@ const App = () => {
                 {/* Rotas protegidas (apenas usuários autenticados) */}
                 <Route element={<ProtectedRoute />}>
                   <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/profile/:userId" element={<UserProfilePage />} />
                   <Route path="/my-events" element={<MyEventsPage />} />
                   <Route path="/events/create" element={<CreateEventPage />} />
+                  <Route path="/events/edit/:id" element={<CreateEventPage />} />
                 </Route>
                 
                 {/* Rotas de admin (apenas usuários admin) */}
                 <Route element={<ProtectedAdminRoute />}>
                   <Route path="/admin" element={<AdminDashboardPage />} />
+                  <Route path="/admin/pending" element={<AdminPendingPage />} />
                   <Route path="/admin/categories" element={<AdminCategoriesPage />} />
                   <Route path="/admin/users" element={<AdminUsersPage />} />
                 </Route>

@@ -324,7 +324,7 @@ const AdminCategoriesPage: React.FC = () => {
               <TableCell component="th" scope="row">Ativos</TableCell>
               <TableCell align="center">
                 <Chip 
-                  label={stats.eventsByStatus.ativo} 
+                  label={stats.eventsByStatus.active} 
                   color="success" 
                   size="small" 
                   sx={{ minWidth: '60px' }}
@@ -335,7 +335,7 @@ const AdminCategoriesPage: React.FC = () => {
               <TableCell component="th" scope="row">Cancelados</TableCell>
               <TableCell align="center">
                 <Chip 
-                  label={stats.eventsByStatus.cancelado} 
+                  label={stats.eventsByStatus.canceled} 
                   color="error" 
                   size="small" 
                   sx={{ minWidth: '60px' }}
@@ -346,7 +346,7 @@ const AdminCategoriesPage: React.FC = () => {
               <TableCell component="th" scope="row">Finalizados</TableCell>
               <TableCell align="center">
                 <Chip 
-                  label={stats.eventsByStatus.finalizado} 
+                  label={stats.eventsByStatus.finished} 
                   color="info" 
                   size="small" 
                   sx={{ minWidth: '60px' }}
@@ -442,9 +442,9 @@ const AdminCategoriesPage: React.FC = () => {
     
     // Calcular os percentuais
     const total = stats.eventsCount;
-    const activePercent = total > 0 ? Math.round((stats.eventsByStatus.ativo / total) * 100) : 0;
-    const canceledPercent = total > 0 ? Math.round((stats.eventsByStatus.cancelado / total) * 100) : 0;
-    const finishedPercent = total > 0 ? Math.round((stats.eventsByStatus.finalizado / total) * 100) : 0;
+    const activePercent = total > 0 ? Math.round((stats.eventsByStatus.active / total) * 100) : 0;
+    const canceledPercent = total > 0 ? Math.round((stats.eventsByStatus.canceled / total) * 100) : 0;
+    const finishedPercent = total > 0 ? Math.round((stats.eventsByStatus.finished / total) * 100) : 0;
     
     return (
       <Box sx={{ 

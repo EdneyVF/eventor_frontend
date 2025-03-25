@@ -216,10 +216,10 @@ const MyEventsPage: React.FC = () => {
               onChange={(e: SelectChangeEvent) => handleStatusFilterChange(e.target.value)}
             >
               <MenuItem value="">Todos</MenuItem>
-              <MenuItem value="ativo">Ativos</MenuItem>
-              <MenuItem value="inativo">Inativos</MenuItem>
-              <MenuItem value="cancelado">Cancelados</MenuItem>
-              <MenuItem value="finalizado">Finalizados</MenuItem>
+              <MenuItem value="active">Ativos</MenuItem>
+              <MenuItem value="inactive">Inativos</MenuItem>
+              <MenuItem value="canceled">Cancelados</MenuItem>
+              <MenuItem value="finished">Finalizados</MenuItem>
             </Select>
           </FormControl>
         </Box>
