@@ -10,7 +10,8 @@ import {
   approveEvent as apiApproveEvent,
   rejectEvent as apiRejectEvent,
   listPendingEvents,
-  getEventById
+  getEventById,
+  getAllEventsAdmin
 } from '../services/eventService';
 
 interface UseEventsState {
@@ -456,10 +457,41 @@ export const useEvents = () => {
     setState(prev => ({ ...prev, error: null }));
   }, []);
 
+  // Buscar todos os eventos (admin)
+  const fetchAllEvents = useCallback(async (params: EventQueryParams = {}) => {
+    try {
+      setState(prev => ({ ...prev, loading: true, error: null }));
+      const response = await getAllEventsAdmin(params);
+      setState(prev => ({
+        ...prev,
+        events: response.events,
+        loading: false,
+        success: true,
+        pagination: {
+          page: response.page,
+          pages: response.pages,
+          total: response.total
+        },
+        counts: response.counts
+      }));
+      return response;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao buscar eventos';
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: errorMessage,
+        success: false
+      }));
+      throw error;
+    }
+  }, []);
+
   return {
     ...state,
     fetchEvents,
     fetchPendingEvents,
+    fetchAllEvents,
     fetchEventById,
     createEvent,
     updateEvent,

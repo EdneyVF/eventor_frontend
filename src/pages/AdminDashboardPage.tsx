@@ -56,10 +56,11 @@ const AdminDashboardPage: React.FC = () => {
     loading, 
     error, 
     pagination, 
-    fetchEvents, 
+    fetchAllEvents, 
     approveEvent, 
     rejectEvent, 
-    deleteEvent 
+    deleteEvent,
+    counts 
   } = useEvents();
   
   // Estados para paginação e filtros
@@ -95,7 +96,7 @@ const AdminDashboardPage: React.FC = () => {
   useEffect(() => {
     const loadEvents = async () => {
       try {
-        await fetchEvents({
+        await fetchAllEvents({
           page: page + 1,
           limit: rowsPerPage,
           search: searchQuery || undefined,
@@ -108,7 +109,7 @@ const AdminDashboardPage: React.FC = () => {
     };
     
     loadEvents();
-  }, [fetchEvents, page, rowsPerPage, searchQuery, filterStatus, filterApproval]);
+  }, [fetchAllEvents, page, rowsPerPage, searchQuery, filterStatus, filterApproval]);
 
   // Handlers para ações da tabela
   const handleChangePage = (event: unknown, newPage: number) => {
@@ -173,7 +174,7 @@ const AdminDashboardPage: React.FC = () => {
         severity: 'success'
       });
       // Recarregar eventos
-      fetchEvents({
+      fetchAllEvents({
         page: page + 1,
         limit: rowsPerPage,
         search: searchQuery,
@@ -213,7 +214,7 @@ const AdminDashboardPage: React.FC = () => {
         severity: 'success'
       });
       // Recarregar eventos
-      fetchEvents({
+      fetchAllEvents({
         page: page + 1,
         limit: rowsPerPage,
         search: searchQuery,
@@ -241,7 +242,7 @@ const AdminDashboardPage: React.FC = () => {
         severity: 'success'
       });
       // Recarregar eventos
-      fetchEvents({
+      fetchAllEvents({
         page: page + 1,
         limit: rowsPerPage,
         search: searchQuery,
@@ -307,30 +308,92 @@ const AdminDashboardPage: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Paper sx={{ p: 3, mb: 3 }}>
+    <Container maxWidth="xl">
+      <Box sx={{ mt: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom color="primary" fontWeight="bold">
-          Dashboard Administrativo
+          Gerenciamento de Eventos
         </Typography>
-        <Typography variant="body1" color="text.secondary" paragraph>
-          Gerencie os eventos, usuários e categorias da plataforma Eventor.
-        </Typography>
-      </Paper>
-
-      <AdminNavigation />
-
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
-          <Typography variant="h5" component="h2">
-            Lista de Eventos
+        
+        <AdminNavigation />
+        
+        {/* Seção de estatísticas */}
+        <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            Estatísticas de Eventos
           </Typography>
-
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 2 }}>
+            <Chip 
+              label={`Total: ${counts.total}`} 
+              color="primary" 
+              variant="outlined" 
+            />
+            <Chip 
+              label={`Ativos: ${counts.active}`} 
+              color="success" 
+              variant="outlined" 
+            />
+            <Chip 
+              label={`Inativos: ${counts.inactive}`} 
+              color="default" 
+              variant="outlined" 
+            />
+            <Chip 
+              label={`Cancelados: ${counts.canceled}`} 
+              color="error" 
+              variant="outlined" 
+            />
+            <Chip 
+              label={`Finalizados: ${counts.finished}`} 
+              color="secondary" 
+              variant="outlined" 
+            />
+            <Chip 
+              label={`Pendentes: ${counts.pending}`} 
+              color="warning" 
+              variant="outlined" 
+            />
+            <Chip 
+              label={`Aprovados: ${counts.approved}`} 
+              color="success" 
+              variant="outlined" 
+            />
+            <Chip 
+              label={`Rejeitados: ${counts.rejected}`} 
+              color="error" 
+              variant="outlined" 
+            />
+          </Box>
+        </Paper>
+        
+        <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h6">
+              Todos os Eventos
+            </Typography>
+          </Box>
+          
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+            <TextField
+              label="Buscar eventos"
+              variant="outlined"
+              size="small"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ minWidth: 300 }}
+            />
             
-            {/* Filtro de Status */}
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>Status</InputLabel>
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel id="status-filter-label">Status</InputLabel>
               <Select
+                labelId="status-filter-label"
+                id="status-filter"
                 value={filterStatus}
                 label="Status"
                 onChange={handleStatusFilterChange}
@@ -342,11 +405,12 @@ const AdminDashboardPage: React.FC = () => {
                 <MenuItem value="finished">Finalizados</MenuItem>
               </Select>
             </FormControl>
-
-            {/* Filtro de Aprovação */}
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>Aprovação</InputLabel>
+            
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel id="approval-filter-label">Aprovação</InputLabel>
               <Select
+                labelId="approval-filter-label"
+                id="approval-filter"
                 value={filterApproval}
                 label="Aprovação"
                 onChange={handleApprovalFilterChange}
@@ -357,190 +421,172 @@ const AdminDashboardPage: React.FC = () => {
                 <MenuItem value="rejected">Rejeitados</MenuItem>
               </Select>
             </FormControl>
-
-            {/* Campo de Busca */}
-            <TextField
-              placeholder="Buscar eventos..."
-              size="small"
-              variant="outlined"
-              value={searchQuery}
-              onChange={handleSearchChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ width: { xs: '100%', sm: '300px' } }}
-            />
-            
-            {/* Botão para criar um novo evento */}
             <Button
               variant="contained"
-              color="secondary"
-              size="small"
+              color="primary"
               startIcon={<AddIcon />}
               onClick={() => navigate('/events/create')}
+              size="small"
+              sx={{ marginLeft: 'auto' }}
             >
               Criar Evento
             </Button>
           </Box>
-        </Box>
 
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-            <CircularProgress />
-          </Box>
-        ) : error ? (
-          <Alert severity="error">{error}</Alert>
-        ) : (
-          <>
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Título</TableCell>
-                    <TableCell>Data</TableCell>
-                    <TableCell>Local</TableCell>
-                    <TableCell>Organizador</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Aprovação</TableCell>
-                    <TableCell>Participantes</TableCell>
-                    <TableCell>Ações</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {events.length === 0 ? (
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : error ? (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          ) : (
+            <>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
                     <TableRow>
-                      <TableCell colSpan={8} align="center">
-                        Nenhum evento encontrado.
-                      </TableCell>
+                      <TableCell>Título</TableCell>
+                      <TableCell>Organizador</TableCell>
+                      <TableCell>Categoria</TableCell>
+                      <TableCell>Data</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Aprovação</TableCell>
+                      <TableCell align="right">Ações</TableCell>
                     </TableRow>
-                  ) : (
-                    events.map((event) => (
-                      <TableRow key={event._id} hover>
-                        <TableCell>{event.title}</TableCell>
-                        <TableCell>{formatDate(event.date)}</TableCell>
-                        <TableCell>{`${event.location.city}, ${event.location.state}`}</TableCell>
-                        <TableCell>{event.organizer.name}</TableCell>
-                        <TableCell>{renderStatusChip(event.status)}</TableCell>
-                        <TableCell>{renderApprovalStatusChip(event.approvalStatus)}</TableCell>
-                        <TableCell>{`${event.participantsCount}/${event.capacity}`}</TableCell>
-                        <TableCell>
-                          <IconButton 
-                            size="small" 
-                            onClick={(e) => handleMenuOpen(e, event._id)}
-                          >
-                            <MoreVertIcon />
-                          </IconButton>
+                  </TableHead>
+                  <TableBody>
+                    {events.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} align="center">
+                          Nenhum evento encontrado
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-
-            <TablePagination
-              component="div"
-              count={pagination.total}
-              page={page}
-              onPageChange={handleChangePage}
-              rowsPerPage={rowsPerPage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-              rowsPerPageOptions={[5, 10, 25]}
-              labelRowsPerPage="Linhas por página:"
-              labelDisplayedRows={({ from, to, count }) =>
-                `${from}-${to} de ${count}`
-              }
-            />
-          </>
-        )}
-
-        {/* Menu de Ações */}
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={handleMenuClose}
-        >
-          <MenuItem onClick={handleViewEvent}>
-            Visualizar
-          </MenuItem>
-          <MenuItem onClick={handleEditEvent}>
-            <EditIcon fontSize="small" sx={{ mr: 1 }} />
-            Editar
-          </MenuItem>
-          
-          {events.find(e => e._id === selectedEventId)?.approvalStatus === 'pending' && (
-            <>
-              <MenuItem onClick={handleApproveEvent}>
-                <CheckIcon fontSize="small" sx={{ mr: 1 }} color="success" />
-                Aprovar
-              </MenuItem>
-              <MenuItem onClick={handleOpenRejectDialog}>
-                <CloseIcon fontSize="small" sx={{ mr: 1 }} color="error" />
-                Rejeitar
-              </MenuItem>
+                    ) : (
+                      events.map((event) => (
+                        <TableRow key={event._id}>
+                          <TableCell>{event.title}</TableCell>
+                          <TableCell>{event.organizer.name}</TableCell>
+                          <TableCell>{event.category.name}</TableCell>
+                          <TableCell>{formatDate(event.date)}</TableCell>
+                          <TableCell>{renderStatusChip(event.status)}</TableCell>
+                          <TableCell>{renderApprovalStatusChip(event.approvalStatus)}</TableCell>
+                          <TableCell align="right">
+                            <IconButton
+                              aria-label="ações"
+                              aria-controls={`menu-${event._id}`}
+                              aria-haspopup="true"
+                              onClick={(e) => handleMenuOpen(e, event._id)}
+                              size="small"
+                            >
+                              <MoreVertIcon />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            
+              <TablePagination
+                component="div"
+                count={pagination.total}
+                page={page}
+                onPageChange={handleChangePage}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                rowsPerPageOptions={[5, 10, 25, 50]}
+                labelRowsPerPage="Eventos por página:"
+              />
             </>
           )}
-          
-          <MenuItem onClick={handleDeleteEvent} sx={{ color: 'error.main' }}>
-            <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
-            Excluir
-          </MenuItem>
-        </Menu>
 
-        {/* Diálogo de Rejeição */}
-        <Dialog open={openRejectDialog} onClose={handleCloseRejectDialog}>
-          <DialogTitle>Rejeitar Evento</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Por favor, forneça um motivo para a rejeição deste evento. Este motivo será enviado ao organizador.
-            </DialogContentText>
-            <TextField
-              autoFocus
-              margin="dense"
-              label="Motivo da rejeição"
-              fullWidth
-              multiline
-              rows={3}
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-              variant="outlined"
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseRejectDialog} color="primary">
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleRejectEvent} 
-              color="error"
-              disabled={rejectionReason.trim() === ''}
-            >
-              Rejeitar
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Snackbar para mensagens */}
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert 
-            onClose={handleCloseSnackbar} 
-            severity={snackbar.severity}
-            variant="filled"
-            sx={{ width: '100%' }}
+          {/* Menu de Ações */}
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleMenuClose}
           >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-      </Paper>
+            <MenuItem onClick={handleViewEvent}>
+              Visualizar
+            </MenuItem>
+            <MenuItem onClick={handleEditEvent}>
+              <EditIcon fontSize="small" sx={{ mr: 1 }} />
+              Editar
+            </MenuItem>
+            
+            {events.find(e => e._id === selectedEventId)?.approvalStatus === 'pending' && (
+              <>
+                <MenuItem onClick={handleApproveEvent}>
+                  <CheckIcon fontSize="small" sx={{ mr: 1 }} color="success" />
+                  Aprovar
+                </MenuItem>
+                <MenuItem onClick={handleOpenRejectDialog}>
+                  <CloseIcon fontSize="small" sx={{ mr: 1 }} color="error" />
+                  Rejeitar
+                </MenuItem>
+              </>
+            )}
+            
+            <MenuItem onClick={handleDeleteEvent} sx={{ color: 'error.main' }}>
+              <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+              Excluir
+            </MenuItem>
+          </Menu>
+
+          {/* Diálogo de Rejeição */}
+          <Dialog open={openRejectDialog} onClose={handleCloseRejectDialog}>
+            <DialogTitle>Rejeitar Evento</DialogTitle>
+            <DialogContent>
+              <DialogContentText>
+                Por favor, forneça um motivo para a rejeição deste evento. Este motivo será enviado ao organizador.
+              </DialogContentText>
+              <TextField
+                autoFocus
+                margin="dense"
+                label="Motivo da rejeição"
+                fullWidth
+                multiline
+                rows={3}
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                variant="outlined"
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseRejectDialog} color="primary">
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleRejectEvent} 
+                color="error"
+                disabled={rejectionReason.trim() === ''}
+              >
+                Rejeitar
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          {/* Snackbar para mensagens */}
+          <Snackbar
+            open={snackbar.open}
+            autoHideDuration={6000}
+            onClose={handleCloseSnackbar}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          >
+            <Alert 
+              onClose={handleCloseSnackbar} 
+              severity={snackbar.severity}
+              variant="filled"
+              sx={{ width: '100%' }}
+            >
+              {snackbar.message}
+            </Alert>
+          </Snackbar>
+        </Paper>
+      </Box>
     </Container>
   );
 };

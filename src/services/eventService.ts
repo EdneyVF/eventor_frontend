@@ -15,6 +15,7 @@ const EVENT_ROUTES = {
   participate: (id: string) => `/api/events/${id}/participate`,
   cancelParticipation: (id: string) => `/api/events/${id}/participate`,
   approvalStatus: (id: string) => `/api/events/${id}/approval-status`,
+  adminAll: '/api/events/admin/all',
 };
 
 // Interfaces
@@ -265,5 +266,29 @@ export const cancelParticipation = async (id: string) => {
 // Obter status de aprovação de um evento
 export const getApprovalStatus = async (id: string) => {
   const response = await api.get<ApprovalStatusResponse>(EVENT_ROUTES.approvalStatus(id));
+  return response.data;
+};
+
+// Interface para resposta de eventos administrativos (todos os eventos)
+export interface AdminEventsResponse {
+  events: Event[];
+  page: number;
+  pages: number;
+  total: number;
+  counts: {
+    total: number;
+    active: number;
+    inactive: number;
+    canceled: number;
+    finished: number;
+    pending: number;
+    approved: number;
+    rejected: number;
+  };
+}
+
+// Buscar todos eventos (admin)
+export const getAllEventsAdmin = async (params: EventQueryParams = {}) => {
+  const response = await api.get<AdminEventsResponse>(EVENT_ROUTES.adminAll, { params });
   return response.data;
 }; 

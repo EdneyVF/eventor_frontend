@@ -73,7 +73,7 @@ const EventCard: React.FC<EventCardProps> = ({
       height: '100%', 
       display: 'flex', 
       flexDirection: 'column',
-      opacity: event.status === 'cancelado' ? 0.7 : 1,
+      opacity: event.status === 'canceled' ? 0.7 : 1,
       transition: 'transform 0.2s ease-in-out',
       '&:hover': {
         transform: 'translateY(-4px)',
@@ -91,7 +91,7 @@ const EventCard: React.FC<EventCardProps> = ({
             target.src = defaultEventImage;
           }}
         />
-        {event.status === 'cancelado' && (
+        {event.status === 'canceled' && (
           <Box sx={{
             position: 'absolute',
             top: 0,
@@ -205,7 +205,7 @@ const EventCard: React.FC<EventCardProps> = ({
             />
           </Box>
           <Box>
-            {event.status !== 'cancelado' && event.approvalStatus === 'approved' && (
+            {event.status !== 'canceled' && event.approvalStatus === 'approved' && (
               <>
                 {showEditButton && (
                   <Button 
@@ -246,7 +246,7 @@ const EventCard: React.FC<EventCardProps> = ({
         >
           Ver Detalhes
         </Button>
-        {showCancelParticipationButton && event.status !== 'cancelado' && (
+        {showCancelParticipationButton && event.status !== 'canceled' && (
           <Button 
             variant="outlined" 
             color="error" 
