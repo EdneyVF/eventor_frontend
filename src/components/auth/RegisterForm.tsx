@@ -7,14 +7,30 @@ import {
   IconButton,
   Alert,
   CircularProgress,
-  Box
+  Box,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText
 } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { 
+  Visibility, 
+  VisibilityOff, 
+  CheckCircle as CheckIcon,
+  Cancel as CancelIcon
+} from '@mui/icons-material';
 import { useAuth } from '../../hooks/useAuth';
 import { RegisterData } from '../../types/auth';
 
 interface RegisterFormProps {
   onSwitchForm: () => void;
+}
+
+interface PasswordValidation {
+  minLength: boolean;
+  hasNumber: boolean;
+  hasLetter: boolean;
+  hasSpecialChar: boolean;
 }
 
 const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchForm }) => {
@@ -30,7 +46,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchForm }) => {
   });
   
   const [showPassword, setShowPassword] = useState(false);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordFocused, setPasswordFocused] = useState(false);
+  const [passwordValidation, setPasswordValidation] = useState<PasswordValidation>({
+    minLength: false,
+    hasNumber: false,
+    hasLetter: false,
+    hasSpecialChar: false
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -38,13 +60,34 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchForm }) => {
     
     // Limpar erros ao editar
     if (error) clearError();
-    if (name === 'password') setPasswordError(null);
+    
+    // Validar senha em tempo real
+    if (name === 'password') {
+      validatePassword(value);
+    }
+  };
+
+  const validatePassword = (password: string): void => {
+    setPasswordValidation({
+      minLength: password.length >= 6,
+      hasNumber: /\d/.test(password),
+      hasLetter: /[a-zA-Z]/.test(password),
+      hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    });
+  };
+
+  const isPasswordValid = (): boolean => {
+    return (
+      passwordValidation.minLength &&
+      passwordValidation.hasNumber &&
+      passwordValidation.hasLetter &&
+      passwordValidation.hasSpecialChar
+    );
   };
 
   const validateForm = (): boolean => {
-    // Verificação básica da senha
-    if (formData.password.length < 6) {
-      setPasswordError('A senha deve ter pelo menos 6 caracteres');
+    // Verificação completa da senha
+    if (!isPasswordValid()) {
       return false;
     }
     return true;
@@ -60,6 +103,16 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchForm }) => {
 
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
+  };
+
+  const handlePasswordFocus = () => {
+    setPasswordFocused(true);
+  };
+
+  const handlePasswordBlur = () => {
+    if (formData.password === '') {
+      setPasswordFocused(false);
+    }
   };
 
   return (
@@ -118,10 +171,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchForm }) => {
         name="password"
         value={formData.password}
         onChange={handleChange}
+        onFocus={handlePasswordFocus}
+        onBlur={handlePasswordBlur}
         fullWidth
         required
-        error={!!passwordError}
-        helperText={passwordError}
+        error={!isPasswordValid() && formData.password.length > 0}
         variant="outlined"
         InputProps={{
           endAdornment: (
@@ -137,6 +191,80 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchForm }) => {
           )
         }}
       />
+
+      {(passwordFocused || formData.password.length > 0) && (
+        <Box sx={{ width: '100%', mb: 1, mt: -1 }}>
+          <Typography variant="caption" color="text.secondary" align="left" sx={{ display: 'block', mb: 1 }}>
+            Sua senha deve conter:
+          </Typography>
+          <List dense disablePadding>
+            <ListItem dense disableGutters sx={{ py: 0.5 }}>
+              <ListItemIcon sx={{ minWidth: 30 }}>
+                {passwordValidation.minLength ? (
+                  <CheckIcon fontSize="small" color="success" />
+                ) : (
+                  <CancelIcon fontSize="small" color="error" />
+                )}
+              </ListItemIcon>
+              <ListItemText 
+                primary="Mínimo de 6 caracteres" 
+                primaryTypographyProps={{ 
+                  variant: 'caption',
+                  color: passwordValidation.minLength ? 'success.main' : 'error'
+                }}
+              />
+            </ListItem>
+            <ListItem dense disableGutters sx={{ py: 0.5 }}>
+              <ListItemIcon sx={{ minWidth: 30 }}>
+                {passwordValidation.hasLetter ? (
+                  <CheckIcon fontSize="small" color="success" />
+                ) : (
+                  <CancelIcon fontSize="small" color="error" />
+                )}
+              </ListItemIcon>
+              <ListItemText 
+                primary="Pelo menos uma letra" 
+                primaryTypographyProps={{ 
+                  variant: 'caption',
+                  color: passwordValidation.hasLetter ? 'success.main' : 'error'
+                }}
+              />
+            </ListItem>
+            <ListItem dense disableGutters sx={{ py: 0.5 }}>
+              <ListItemIcon sx={{ minWidth: 30 }}>
+                {passwordValidation.hasNumber ? (
+                  <CheckIcon fontSize="small" color="success" />
+                ) : (
+                  <CancelIcon fontSize="small" color="error" />
+                )}
+              </ListItemIcon>
+              <ListItemText 
+                primary="Pelo menos um número" 
+                primaryTypographyProps={{ 
+                  variant: 'caption',
+                  color: passwordValidation.hasNumber ? 'success.main' : 'error'
+                }}
+              />
+            </ListItem>
+            <ListItem dense disableGutters sx={{ py: 0.5 }}>
+              <ListItemIcon sx={{ minWidth: 30 }}>
+                {passwordValidation.hasSpecialChar ? (
+                  <CheckIcon fontSize="small" color="success" />
+                ) : (
+                  <CancelIcon fontSize="small" color="error" />
+                )}
+              </ListItemIcon>
+              <ListItemText 
+                primary="Pelo menos um caractere especial (!@#$%^&*.,)" 
+                primaryTypographyProps={{ 
+                  variant: 'caption',
+                  color: passwordValidation.hasSpecialChar ? 'success.main' : 'error'
+                }}
+              />
+            </ListItem>
+          </List>
+        </Box>
+      )}
 
       <TextField
         label="Telefone (opcional)"
@@ -165,7 +293,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchForm }) => {
         color="primary"
         size="large"
         fullWidth
-        disabled={loading}
+        disabled={loading || !isPasswordValid()}
         sx={{ mt: 2 }}
       >
         {loading ? <CircularProgress size={24} /> : 'Cadastrar'}
