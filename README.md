@@ -30,7 +30,7 @@ Eventor é uma plataforma web moderna para criação, gerenciamento e participa�
 
 1. Clone o repositório:
    ```bash
-   git clone https://github.com/seu-usuario/eventor_frontend.git
+   git clone https://github.com/EdneyVF/eventor_frontend.git
    cd eventor_frontend
    ```
 
