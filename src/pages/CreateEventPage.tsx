@@ -28,7 +28,8 @@ import {
   LocationOn as LocationIcon,
   Description as DescriptionIcon,
   Category as CategoryIcon,
-  Event as EventIcon
+  Event as EventIcon,
+  Image as ImageIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEvents } from '../hooks/useEvents';
@@ -313,6 +314,14 @@ const CreateEventPage: React.FC = () => {
       newErrors.price = 'O preço deve ser um valor não-negativo';
     }
     
+    // Validação da URL da imagem
+    if (formData.imageUrl.trim() !== '') {
+      const urlPattern = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i;
+      if (!urlPattern.test(formData.imageUrl)) {
+        newErrors.imageUrl = 'URL de imagem inválida. Deve começar com http:// ou https://';
+      }
+    }
+    
     // Validação de tags (se existirem)
     if (formData.tags.length > 10) {
       newErrors.tags = 'Máximo de 10 tags permitidas';
@@ -330,7 +339,8 @@ const CreateEventPage: React.FC = () => {
 
   // Preparar dados para envio
   const prepareSubmitData = (): EventCreateData | EventUpdateData => {
-    return {
+    // Preparar os dados base
+    const data: EventUpdateData = {
       title: formData.title,
       description: formData.description,
       date: formData.date ? formData.date.toISOString() : '',
@@ -345,8 +355,18 @@ const CreateEventPage: React.FC = () => {
       capacity: formData.capacity === 0 ? null : formData.capacity,
       price: formData.price,
       tags: formData.tags.length > 0 ? formData.tags : undefined,
-      imageUrl: formData.imageUrl || undefined
     };
+    
+    // Tratamento específico para o campo imageUrl
+    // Em modo de edição, sempre envie o valor explicitamente (mesmo se vazio)
+    if (isEditMode) {
+      data.imageUrl = formData.imageUrl.trim() !== '' ? formData.imageUrl : null;
+    } else if (formData.imageUrl.trim() !== '') {
+      // Em modo de criação, só envie se houver valor
+      data.imageUrl = formData.imageUrl;
+    }
+    
+    return data;
   };
 
   // Submissão do formulário
@@ -695,8 +715,45 @@ const CreateEventPage: React.FC = () => {
                   onChange={handleChange}
                   fullWidth
                   variant="outlined"
-                  helperText="Deixe em branco para usar uma imagem padrão"
+                  error={!!errors.imageUrl}
+                  helperText={errors.imageUrl || "Cole o endereço (URL) de uma imagem online ou deixe em branco para usar a imagem padrão do sistema"}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <ImageIcon color="action" />
+                      </InputAdornment>
+                    ),
+                  }}
                 />
+                {formData.imageUrl && !errors.imageUrl && (
+                  <Box sx={{ mt: 2, p: 2, border: '1px solid #eee', borderRadius: 1 }}>
+                    <Typography variant="caption" display="block" gutterBottom>
+                      Pré-visualização:
+                    </Typography>
+                    <Box 
+                      component="img"
+                      sx={{
+                        height: 100,
+                        maxWidth: '100%',
+                        objectFit: 'contain'
+                      }}
+                      src={formData.imageUrl}
+                      alt="Pré-visualização da imagem"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        // Mostrar mensagem de erro
+                        const parent = target.parentElement;
+                        if (parent) {
+                          const errorMsg = document.createElement('p');
+                          errorMsg.textContent = 'Não foi possível carregar a imagem. Verifique se a URL está correta.';
+                          errorMsg.style.color = 'red';
+                          parent.appendChild(errorMsg);
+                        }
+                      }}
+                    />
+                  </Box>
+                )}
               </Grid>
 
               {/* Botões de ação */}

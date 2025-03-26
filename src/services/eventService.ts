@@ -87,7 +87,26 @@ export interface EventCreateData {
   imageUrl?: string;
 }
 
-export type EventUpdateData = Partial<EventCreateData>;
+export interface EventUpdateData {
+  title?: string;
+  description?: string;
+  date?: string;
+  endDate?: string;
+  location?: {
+    address: string;
+    city: string;
+    state: string;
+    country?: string;
+  };
+  category?: string;
+  capacity?: number | null;
+  price?: number;
+  tags?: string[];
+  imageUrl?: string | null;
+}
+
+// Outra forma de definir EventUpdateData:
+// export type EventUpdateData = Partial<EventCreateData> & { imageUrl?: string | null };
 
 // Parâmetros para consulta de eventos
 export interface EventQueryParams {
