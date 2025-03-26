@@ -27,7 +27,6 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { Event } from '../../services/eventService';
-import defaultEventImage from '../../assets/images/default-event.svg';
 
 interface EventCardProps {
   event: Event;
@@ -125,11 +124,13 @@ const EventCard: React.FC<EventCardProps> = ({
         <CardMedia
           component="img"
           height="200"
-          image={event.imageUrl || defaultEventImage}
+          image={event.imageUrl || '/images/default-event.svg'}
           alt={event.title}
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.src = defaultEventImage;
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            borderRadius: '8px'
           }}
         />
         {event.status === 'canceled' && (

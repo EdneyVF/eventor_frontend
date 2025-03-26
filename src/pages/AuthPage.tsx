@@ -3,7 +3,6 @@ import { Box, Typography, Paper, useTheme, useMediaQuery } from '@mui/material';
 import AuthCard from '../components/auth/AuthCard';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import logoSvg from '../assets/icons/logo.png';
 
 const AuthPage: React.FC = () => {
   const { authState } = useAuth();
@@ -18,13 +17,17 @@ const AuthPage: React.FC = () => {
       if (user.role === 'admin') {
         navigate('/admin');
       } else {
-        navigate('/');
+        navigate('/events');
       }
     }
   }, [user, navigate]);
 
   const handleLogoClick = () => {
-    navigate('/');
+    if (user) {
+      navigate('/events');
+    } else {
+      navigate('/');
+    }
   };
 
   return (
@@ -83,7 +86,7 @@ const AuthPage: React.FC = () => {
               }}
             >
               <img 
-                src={logoSvg} 
+                src="/icons/logo.png" 
                 alt="Eventor Logo" 
                 style={{ 
                   width: '100%',

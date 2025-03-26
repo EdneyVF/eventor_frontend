@@ -17,5 +17,21 @@ export default defineConfig({
   // Configuração para variáveis de ambiente
   define: {
     'process.env': {}
-  }
+  },
+  // Configuração de build
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: false,
+    // Configuração para garantir que os caminhos dos assets sejam relativos
+    rollupOptions: {
+      output: {
+        manualChunks: undefined
+      }
+    }
+  },
+  // Configuração base para o router
+  base: '/',
+  // Configuração para copiar arquivos da pasta public
+  publicDir: 'public'
 })

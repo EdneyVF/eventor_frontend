@@ -26,7 +26,6 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import logoSvg from '../../assets/icons/logo.png';
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -56,6 +55,14 @@ const Header: React.FC = () => {
     logout();
     handleClose();
     navigate('/');
+  };
+
+  const handleLogoClick = () => {
+    if (user) {
+      navigate('/events');
+    } else {
+      navigate('/');
+    }
   };
 
   // Renderiza o menu do usuário autenticado
@@ -170,7 +177,7 @@ const Header: React.FC = () => {
               cursor: 'pointer',
               gap: { xs: 0.5, sm: 1 }
             }}
-            onClick={() => navigate('/')}
+            onClick={handleLogoClick}
           >
             <Box 
               sx={{
@@ -183,7 +190,7 @@ const Header: React.FC = () => {
               }}
             >
               <img 
-                src={logoSvg} 
+                src="/icons/logo.png" 
                 alt="Eventor Logo" 
                 style={{ 
                   width: '100%',
@@ -215,7 +222,7 @@ const Header: React.FC = () => {
                 fontSize: '1rem'
               }}
             >
-              E
+              Eventor
             </Typography>
           </Box>
           

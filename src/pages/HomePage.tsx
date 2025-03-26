@@ -19,7 +19,6 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import eventIllustration from '../assets/images/event-illustration.svg';
 
 const HomePage: React.FC = () => {
   const { authState } = useAuth();
@@ -132,7 +131,7 @@ const HomePage: React.FC = () => {
             <Grid item xs={12} md={6} sx={{ display: { xs: isMobile ? 'none' : 'block' } }}>
               <Box 
                 component="img"
-                src={eventIllustration}
+                src="/images/event-illustration.svg"
                 alt="Eventos"
                 sx={{ 
                   width: '100%', 
