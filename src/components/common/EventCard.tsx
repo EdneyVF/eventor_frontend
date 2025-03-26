@@ -128,7 +128,7 @@ const EventCard: React.FC<EventCardProps> = ({
           alt={event.title}
           style={{
             width: '100%',
-            objectFit: 'contain',
+            objectFit: 'cover',
             borderRadius: '8px'
           }}
         />

@@ -298,12 +298,16 @@ const EventDetailsPage: React.FC = () => {
       
       {/* Imagem do evento */}
       <Paper sx={{ mb: 3, overflow: 'hidden' }}>
-        <Box sx={{ position: 'relative', height: 400 }}>
+        <Box sx={{ 
+          position: 'relative', 
+          height: 400, 
+          boxShadow: 'inset 0px 2px 8px 0px rgba(0, 0, 0, 0.15)'
+        }}>
           <CardMedia
             component="img"
             image={event.imageUrl || '/images/default-event.svg'}
             alt={event.title}
-            sx={{ height: '100%', width: '100%', objectFit: 'contain' }}
+            sx={{ height: '100%', objectFit: 'contain' }}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = '/images/default-event.svg';
