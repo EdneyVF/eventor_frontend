@@ -45,7 +45,6 @@ import {
 } from '@mui/icons-material';
 import { useEvents } from '../hooks/useEvents';
 import { useAuth } from '../hooks/useAuth';
-import defaultEventImage from '../assets/images/default-event.svg';
 
 const EventDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -304,14 +303,10 @@ const EventDetailsPage: React.FC = () => {
             component="img"
             image={event.imageUrl || '/images/default-event.svg'}
             alt={event.title}
-            sx={{
-              height: '100%',
-              objectFit: 'cover',
-              borderRadius: '8px'
-            }}
+            sx={{ height: '100%', width: '100%', objectFit: 'contain' }}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              target.src = defaultEventImage;
+              target.src = '/images/default-event.svg';
             }}
           />
           {(event.status === 'canceled' || event.status === 'inactive') && (
