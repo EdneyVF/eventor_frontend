@@ -443,7 +443,10 @@ const EventDetailsPage: React.FC = () => {
                   </ListItemIcon>
                   <ListItemText 
                     primary="Participantes" 
-                    secondary={`${event.participantsCount || 0}/${event.capacity}`}
+                    secondary={event.capacity !== null 
+                      ? `${event.participantsCount || 0}/${event.capacity}` 
+                      : `${event.participantsCount || 0}/Ilimitado`
+                    }
                   />
                 </ListItem>
                 <ListItem>
@@ -496,7 +499,7 @@ const EventDetailsPage: React.FC = () => {
                       fullWidth
                       startIcon={<CheckIcon />}
                       onClick={handleParticipate}
-                      disabled={event.participantsCount >= event.capacity}
+                      disabled={event.capacity !== null && event.participantsCount >= event.capacity}
                     >
                       Participar do Evento
                     </Button>

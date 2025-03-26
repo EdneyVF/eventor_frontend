@@ -45,7 +45,7 @@ export interface Event {
   endDate?: string;
   location: EventLocation;
   category: EventCategory;
-  capacity: number;
+  capacity: number | null;
   price: number;
   organizer: EventOrganizer;
   status: 'active' | 'inactive' | 'canceled' | 'finished';
@@ -55,6 +55,8 @@ export interface Event {
   participants?: EventOrganizer[];
   tags?: string[];
   imageUrl?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface EventsResponse {
@@ -77,7 +79,7 @@ export interface EventCreateData {
     country?: string;
   };
   category: string;
-  capacity: number;
+  capacity: number | null;
   price?: number;
   tags?: string[];
 }
@@ -111,7 +113,7 @@ export interface PendingEventsResponse {
   success: boolean;
   count: number;
   events: Array<{
-    id: string;
+    _id: string;
     title: string;
     organizer: {
       name: string;
@@ -119,7 +121,19 @@ export interface PendingEventsResponse {
     };
     category: {
       name: string;
+      _id?: string;
     };
+    description?: string;
+    date?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    capacity?: number | null;
+    price?: number;
+    status?: string;
+    approvalStatus?: string;
+    location?: EventLocation;
+    isFullyBooked?: boolean;
+    participantsCount?: number;
   }>;
 }
 

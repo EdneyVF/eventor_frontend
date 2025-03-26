@@ -5,6 +5,7 @@ import {
   EventCreateData, 
   EventUpdateData,
   EventQueryParams,
+  EventOrganizer,
   updateEvent as apiUpdateEvent, 
   deleteEvent as apiDeleteEvent,
   approveEvent as apiApproveEvent,
@@ -100,14 +101,32 @@ export const useEvents = () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
     try {
       const response = await listPendingEvents();
+      
+      // Map the PendingEventsResponse events to Event objects
+      const mappedEvents = response.events.map(event => ({
+        _id: event._id,
+        title: event.title,
+        organizer: event.organizer as EventOrganizer,
+        category: {
+          _id: event.category._id || 'unknown',
+          name: event.category.name
+        },
+        description: event.description || '',
+        date: event.date || new Date().toISOString(),
+        createdAt: event.createdAt,
+        updatedAt: event.updatedAt,
+        status: event.status || 'inactive',
+        approvalStatus: event.approvalStatus || 'pending',
+        capacity: event.capacity,
+        location: event.location || { address: '', city: '', state: '', country: '' },
+        price: event.price || 0,
+        isFullyBooked: event.isFullyBooked || false,
+        participantsCount: event.participantsCount || 0
+      })) as Event[];
+
       setState(prev => ({
         ...prev,
-        events: response.events.map(event => ({
-          _id: event.id,
-          title: event.title,
-          organizer: event.organizer,
-          category: event.category
-        } as Event)),
+        events: mappedEvents,
         loading: false,
         success: true
       }));

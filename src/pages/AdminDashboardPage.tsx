@@ -453,13 +453,14 @@ const AdminDashboardPage: React.FC = () => {
                       <TableCell>Data</TableCell>
                       <TableCell>Status</TableCell>
                       <TableCell>Aprovação</TableCell>
+                      <TableCell>Capacidade</TableCell>
                       <TableCell align="right">Ações</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {events.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} align="center">
+                        <TableCell colSpan={8} align="center">
                           Nenhum evento encontrado
                         </TableCell>
                       </TableRow>
@@ -472,6 +473,14 @@ const AdminDashboardPage: React.FC = () => {
                           <TableCell>{formatDate(event.date)}</TableCell>
                           <TableCell>{renderStatusChip(event.status)}</TableCell>
                           <TableCell>{renderApprovalStatusChip(event.approvalStatus)}</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={event.capacity ? `${event.capacity} pessoas` : 'Ilimitado'}
+                              size="small"
+                              color="primary"
+                              variant="outlined"
+                            />
+                          </TableCell>
                           <TableCell align="right">
                             <IconButton
                               aria-label="ações"

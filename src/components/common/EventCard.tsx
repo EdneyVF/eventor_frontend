@@ -206,7 +206,10 @@ const EventCard: React.FC<EventCardProps> = ({
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <PersonIcon color="action" fontSize="small" sx={{ mr: 1 }} />
             <Typography variant="body2" color="text.secondary">
-              {event.participantsCount || 0}/{event.capacity} participantes
+              {event.capacity !== null 
+                ? `${event.participantsCount || 0}/${event.capacity} participantes` 
+                : `${event.participantsCount || 0}/∞ participantes`
+              }
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>

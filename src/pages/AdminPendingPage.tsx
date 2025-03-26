@@ -144,17 +144,27 @@ const AdminPendingPage: React.FC = () => {
   };
 
   // Formatar data
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | undefined) => {
     if (!dateString) return '-';
     
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
+    try {
+      const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return '-';
+      }
+      
+      return new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date);
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return '-';
+    }
   };
 
   // Renderizar informações do organizador
@@ -224,14 +234,16 @@ const AdminPendingPage: React.FC = () => {
                   <TableCell sx={{ color: 'primary.contrastText', fontWeight: 'medium' }}>Título</TableCell>
                   <TableCell sx={{ color: 'primary.contrastText', fontWeight: 'medium' }}>Organizador</TableCell>
                   <TableCell sx={{ color: 'primary.contrastText', fontWeight: 'medium' }}>Categoria</TableCell>
-                  <TableCell sx={{ color: 'primary.contrastText', fontWeight: 'medium' }}>Data de Criação</TableCell>
+                  <TableCell sx={{ color: 'primary.contrastText', fontWeight: 'medium' }}>Data do Evento</TableCell>
+                  <TableCell sx={{ color: 'primary.contrastText', fontWeight: 'medium' }}>Última Atualização</TableCell>
+                  <TableCell sx={{ color: 'primary.contrastText', fontWeight: 'medium' }}>Capacidade</TableCell>
                   <TableCell sx={{ color: 'primary.contrastText', fontWeight: 'medium' }} align="center">Ações</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {events.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} align="center">
+                    <TableCell colSpan={7} align="center">
                       Nenhum evento pendente de aprovação.
                     </TableCell>
                   </TableRow>
@@ -261,7 +273,16 @@ const AdminPendingPage: React.FC = () => {
                       </TableCell>
                       <TableCell>{renderOrganizer(event.organizer)}</TableCell>
                       <TableCell>{renderCategory(event.category)}</TableCell>
-                      <TableCell>{formatDate(event.date)}</TableCell>
+                      <TableCell>{event.date ? formatDate(event.date) : '-'}</TableCell>
+                      <TableCell>{event.updatedAt ? formatDate(event.updatedAt) : '-'}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={event.capacity ? `${event.capacity} pessoas` : 'Ilimitado'}
+                          size="small"
+                          color={event.capacity ? "primary" : "default"}
+                          variant="outlined"
+                        />
+                      </TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
                           <Tooltip title="Aprovar evento">

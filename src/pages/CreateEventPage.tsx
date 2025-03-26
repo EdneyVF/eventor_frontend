@@ -249,8 +249,8 @@ const CreateEventPage: React.FC = () => {
     }
     
     // Validação de capacidade
-    if (formData.capacity < 1) {
-      newErrors.capacity = 'A capacidade deve ser pelo menos 1';
+    if (formData.capacity < 0) {
+      newErrors.capacity = 'A capacidade deve ser um valor não-negativo';
     }
     
     // Validação de preço
@@ -287,7 +287,7 @@ const CreateEventPage: React.FC = () => {
         country: formData.location.country
       },
       category: formData.category,
-      capacity: formData.capacity,
+      capacity: formData.capacity === 0 ? null : formData.capacity,
       price: formData.price,
       tags: formData.tags.length > 0 ? formData.tags : undefined
     };
@@ -571,9 +571,9 @@ const CreateEventPage: React.FC = () => {
                   onChange={handleNumberChange}
                   fullWidth
                   variant="outlined"
-                  inputProps={{ min: 1 }}
+                  inputProps={{ min: 0 }}
                   error={!!errors.capacity}
-                  helperText={errors.capacity}
+                  helperText={errors.capacity || "Use 0 para capacidade ilimitada"}
                   required
                 />
               </Grid>
