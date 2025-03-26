@@ -129,7 +129,7 @@ const ProfilePage: React.FC = () => {
   }, [tabValue, fetchMyEvents, fetchParticipatingEvents]);
 
   // Manipulação das abas
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 

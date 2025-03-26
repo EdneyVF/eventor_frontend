@@ -135,7 +135,7 @@ const MyEventsPage: React.FC = () => {
     }
   }, [tabValue, page, limit, statusFilter, fetchParticipatingEvents]);
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
@@ -198,7 +198,7 @@ const MyEventsPage: React.FC = () => {
     setPage(1); // Voltar para a primeira página ao mudar o filtro
   };
 
-  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
   };
 

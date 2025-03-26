@@ -120,7 +120,7 @@ const AdminDashboardPage: React.FC = () => {
   }, [fetchAllEvents, page, rowsPerPage, searchQuery, filterStatus, filterApproval]);
 
   // Handlers para ações da tabela
-  const handleChangePage = (event: unknown, newPage: number) => {
+  const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
   };
 

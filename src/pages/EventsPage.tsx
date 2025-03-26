@@ -159,9 +159,8 @@ const EventsPage: React.FC = () => {
     setLocation(event.target.value);
   };
 
-  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
   const handleCategoryClick = (categoryId: string) => {
