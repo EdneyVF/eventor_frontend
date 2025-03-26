@@ -8,10 +8,14 @@ export default defineConfig({
     proxy: {
       // Proxy para o backend em desenvolvimento
       '/api': {
-        target: 'http://localhost:5000', // URL do backend
+        target: process.env.VITE_API_URL || 'http://localhost:3001', // URL do backend
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
       }
     }
+  },
+  // Configuração para variáveis de ambiente
+  define: {
+    'process.env': {}
   }
 })
