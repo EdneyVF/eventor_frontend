@@ -82,6 +82,7 @@ export interface EventCreateData {
   capacity: number | null;
   price?: number;
   tags?: string[];
+  imageUrl?: string;
 }
 
 export type EventUpdateData = Partial<EventCreateData>;

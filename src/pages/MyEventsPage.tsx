@@ -26,6 +26,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEvents } from '../hooks/useEvents';
 import { Event, EventQueryParams } from '../services/eventService';
 import EventCard from '../components/common/EventCard';
+import { useAuth } from '../hooks/useAuth';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -56,6 +57,8 @@ const TabPanel = (props: TabPanelProps) => {
 const MyEventsPage: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
   const navigate = useNavigate();
+  const { authState } = useAuth();
+  const isAdmin = authState.user?.role === 'admin';
   
   // Estados para paginação e filtros
   const [page, setPage] = useState(1);
@@ -342,12 +345,26 @@ const MyEventsPage: React.FC = () => {
     
     return (
       <>
+        {/* Informação sobre eventos pendentes */}
+        {createdEvents.some(event => event.approvalStatus === 'pending') && !isAdmin && (
+          <Alert severity="info" sx={{ mb: 3 }}>
+            Eventos editados voltam para o estado de aprovação pendente e ficam inativos até serem aprovados novamente.
+          </Alert>
+        )}
+        
+        {/* Informação para administradores */}
+        {isAdmin && (
+          <Alert severity="success" sx={{ mb: 3 }}>
+            Como administrador, suas edições em eventos são aprovadas automaticamente.
+          </Alert>
+        )}
+        
         <Grid container spacing={3}>
           {createdEvents.map(event => (
             <Grid item xs={12} sm={6} md={4} key={event._id}>
               <EventCard 
                 event={event}
-                showEditButton={event.status !== 'canceled' && event.approvalStatus === 'approved'}
+                showEditButton={event.status !== 'canceled'}
                 showCancelButton={event.status === 'active'}
                 onEdit={handleEditEvent}
                 onCancel={handleCancelEvent}

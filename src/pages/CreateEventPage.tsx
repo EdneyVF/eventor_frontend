@@ -24,15 +24,17 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/pt-br';
 import {
   Add as AddIcon,
+  Save as SaveIcon,
   LocationOn as LocationIcon,
   Description as DescriptionIcon,
   Category as CategoryIcon,
   Event as EventIcon
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useEvents } from '../hooks/useEvents';
 import { useCategories } from '../hooks/useCategories';
-import { EventCreateData } from '../services/eventService';
+import { EventCreateData, EventUpdateData } from '../services/eventService';
+import { useAuth } from '../hooks/useAuth';
 
 interface EventFormData {
   title: string;
@@ -54,10 +56,21 @@ interface EventFormData {
 
 const CreateEventPage: React.FC = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEditMode = !!id;
   
   // Hooks para eventos e categorias
-  const { createEvent, loading: eventLoading, error: eventError } = useEvents();
+  const { 
+    createEvent, 
+    updateEvent, 
+    fetchEventById, 
+    event, 
+    loading: eventLoading, 
+    error: eventError 
+  } = useEvents();
   const { categories, loading: categoriesLoading, error: categoriesError, fetchCategories } = useCategories();
+  const { authState } = useAuth();
+  const isAdmin = authState.user?.role === 'admin';
   
   // Carregar categorias ao montar o componente
   useEffect(() => {
@@ -88,6 +101,48 @@ const CreateEventPage: React.FC = () => {
   // Estados de UI
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [alert, setAlert] = useState<{type: 'success' | 'error', message: string} | null>(null);
+  const [initialLoad, setInitialLoad] = useState(true);
+
+  // Carregar dados do evento se estiver em modo de edição
+  useEffect(() => {
+    if (isEditMode && id) {
+      fetchEventById(id)
+        .then(() => setInitialLoad(false))
+        .catch(err => {
+          console.error('Erro ao carregar evento:', err);
+          setAlert({
+            type: 'error',
+            message: err instanceof Error ? err.message : 'Erro ao carregar evento'
+          });
+          setInitialLoad(false);
+        });
+    } else {
+      setInitialLoad(false);
+    }
+  }, [isEditMode, id, fetchEventById]);
+
+  // Preencher o formulário com os dados do evento carregado
+  useEffect(() => {
+    if (isEditMode && event && !initialLoad) {
+      setFormData({
+        title: event.title,
+        description: event.description,
+        date: event.date ? new Date(event.date) : null,
+        endDate: event.endDate ? new Date(event.endDate) : null,
+        location: {
+          address: event.location.address,
+          city: event.location.city,
+          state: event.location.state,
+          country: event.location.country
+        },
+        category: event.category._id,
+        capacity: event.capacity === null ? 0 : event.capacity,
+        price: event.price,
+        imageUrl: event.imageUrl || '',
+        tags: event.tags || []
+      });
+    }
+  }, [event, isEditMode, initialLoad]);
 
   // Handler para mudanças nos campos do formulário
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -220,7 +275,7 @@ const CreateEventPage: React.FC = () => {
       newErrors.date = 'A data e hora são obrigatórias';
     } else {
       const now = new Date();
-      if (formData.date <= now) {
+      if (formData.date <= now && !isEditMode) {
         newErrors.date = 'A data do evento deve ser futura';
       }
     }
@@ -274,7 +329,7 @@ const CreateEventPage: React.FC = () => {
   };
 
   // Preparar dados para envio
-  const prepareSubmitData = (): EventCreateData => {
+  const prepareSubmitData = (): EventCreateData | EventUpdateData => {
     return {
       title: formData.title,
       description: formData.description,
@@ -289,7 +344,8 @@ const CreateEventPage: React.FC = () => {
       category: formData.category,
       capacity: formData.capacity === 0 ? null : formData.capacity,
       price: formData.price,
-      tags: formData.tags.length > 0 ? formData.tags : undefined
+      tags: formData.tags.length > 0 ? formData.tags : undefined,
+      imageUrl: formData.imageUrl || undefined
     };
   };
 
@@ -303,11 +359,17 @@ const CreateEventPage: React.FC = () => {
     
     try {
       const eventData = prepareSubmitData();
-      const result = await createEvent(eventData);
+      let result;
+      
+      if (isEditMode && id) {
+        result = await updateEvent(id, eventData);
+      } else {
+        result = await createEvent(eventData as EventCreateData);
+      }
       
       setAlert({
         type: 'success',
-        message: result.message || 'Evento criado com sucesso!'
+        message: result.message || (isEditMode ? 'Evento atualizado com sucesso!' : 'Evento criado com sucesso!')
       });
       
       // Redirecionar após um breve delay
@@ -316,13 +378,24 @@ const CreateEventPage: React.FC = () => {
       }, 2000);
       
     } catch (error) {
-      console.error('Erro ao criar evento:', error);
+      console.error('Erro ao ' + (isEditMode ? 'atualizar' : 'criar') + ' evento:', error);
       setAlert({
         type: 'error',
-        message: error instanceof Error ? error.message : 'Erro ao criar evento. Tente novamente.'
+        message: error instanceof Error ? error.message : 'Erro ao ' + (isEditMode ? 'atualizar' : 'criar') + ' evento. Tente novamente.'
       });
     }
   };
+
+  // Mostrar loading enquanto carrega os dados no modo de edição
+  if (isEditMode && initialLoad) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+          <CircularProgress />
+        </Box>
+      </Container>
+    );
+  }
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
@@ -343,12 +416,22 @@ const CreateEventPage: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             <EventIcon fontSize="large" color="primary" sx={{ mr: 2 }} />
             <Typography variant="h4" component="h1" color="primary" fontWeight="bold">
-              Criar Novo Evento
+              {isEditMode ? 'Editar Evento' : 'Criar Novo Evento'}
             </Typography>
           </Box>
           <Typography variant="body1" color="text.secondary">
-            Preencha os detalhes do seu evento. Os campos obrigatórios estão marcados.
+            {isEditMode 
+              ? 'Atualize as informações do seu evento. Os campos obrigatórios estão marcados.' 
+              : 'Preencha os detalhes do seu evento. Os campos obrigatórios estão marcados.'}
           </Typography>
+          
+          {isEditMode && (
+            <Alert severity={isAdmin ? "success" : "info"} sx={{ mt: 2 }}>
+              {isAdmin 
+                ? 'Como administrador, suas edições serão aplicadas imediatamente e o evento permanecerá aprovado e ativo.'
+                : 'Quando um evento é editado, ele volta para o estado de aprovação pendente e fica inativo até ser aprovado novamente.'}
+            </Alert>
+          )}
         </Paper>
 
         {/* Formulário de criação de evento */}
@@ -632,9 +715,9 @@ const CreateEventPage: React.FC = () => {
                   color="primary" 
                   size="large"
                   disabled={eventLoading}
-                  startIcon={eventLoading ? <CircularProgress size={20} /> : <AddIcon />}
+                  startIcon={eventLoading ? <CircularProgress size={20} /> : (isEditMode ? <SaveIcon /> : <AddIcon />)}
                 >
-                  {eventLoading ? 'Criando...' : 'Criar Evento'}
+                  {eventLoading ? (isEditMode ? 'Atualizando...' : 'Criando...') : (isEditMode ? 'Salvar Alterações' : 'Criar Evento')}
                 </Button>
               </Grid>
             </Grid>

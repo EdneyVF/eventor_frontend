@@ -234,7 +234,7 @@ const EventCard: React.FC<EventCardProps> = ({
               size="small" 
               color={event.approvalStatus === 'approved' ? "success" : 
                      event.approvalStatus === 'rejected' ? "error" : "warning"} 
-              variant="outlined"
+              sx={{ fontWeight: 'bold' }}
             />
             <Chip 
               label={event.status === 'active' ? 'Ativo' :
@@ -244,48 +244,44 @@ const EventCard: React.FC<EventCardProps> = ({
               color={event.status === 'active' ? "success" :
                      event.status === 'inactive' ? "warning" :
                      event.status === 'canceled' ? "error" : "secondary"}
-              variant="outlined"
+              sx={{ fontWeight: 'bold' }}
             />
           </Box>
           <Box sx={{ display: 'flex' }}>
-            {event.status !== 'canceled' && event.approvalStatus === 'approved' && (
-              <>
-                {showEditButton && (
-                  <Tooltip title="Editar evento" arrow>
-                    <IconButton 
-                      color="primary" 
-                      onClick={() => onEdit?.(event._id)}
-                      size="small"
-                      sx={{ 
-                        mr: 1,
-                        '&:hover': {
-                          backgroundColor: 'primary.light',
-                          color: 'primary.contrastText'
-                        }
-                      }}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                )}
-                {showCancelButton && (
-                  <Tooltip title="Cancelar evento" arrow>
-                    <IconButton 
-                      color="error" 
-                      onClick={handleOpenCancelDialog}
-                      size="small"
-                      sx={{ 
-                        '&:hover': {
-                          backgroundColor: 'error.light',
-                          color: 'error.contrastText'
-                        }
-                      }}
-                    >
-                      <CancelIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                )}
-              </>
+            {showEditButton && event.status !== 'canceled' && (
+              <Tooltip title={event.approvalStatus === 'pending' ? "Editar evento pendente" : "Editar evento"} arrow>
+                <IconButton 
+                  color="primary" 
+                  onClick={() => onEdit?.(event._id)}
+                  size="small"
+                  sx={{ 
+                    mr: 1,
+                    '&:hover': {
+                      backgroundColor: 'primary.light',
+                      color: 'primary.contrastText'
+                    }
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+            {showCancelButton && event.status === 'active' && (
+              <Tooltip title="Cancelar evento" arrow>
+                <IconButton 
+                  color="error" 
+                  onClick={handleOpenCancelDialog}
+                  size="small"
+                  sx={{ 
+                    '&:hover': {
+                      backgroundColor: 'error.light',
+                      color: 'error.contrastText'
+                    }
+                  }}
+                >
+                  <CancelIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
             )}
           </Box>
         </Box>

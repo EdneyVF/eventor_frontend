@@ -195,17 +195,19 @@ export const useEvents = () => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
       const result = await apiUpdateEvent(id, data);
+      
+      // Atualizar o evento na lista
       setState(prev => ({
         ...prev,
         loading: false,
         success: true,
-        // Atualizar o status do evento na lista
+        // Usar o evento retornado pela API, que já terá o status correto 
+        // (pendente para usuários normais ou aprovado para admins)
         events: prev.events.map(e => 
-          e._id === id ? { ...e, ...result, approvalStatus: 'pending', status: 'inactive' } : e
+          e._id === id ? { ...e, ...result.event } : e
         ),
-        event: prev.event?._id === id 
-          ? { ...prev.event, ...result, approvalStatus: 'pending', status: 'inactive' } 
-          : prev.event
+        // Atualizar o evento atual se for o mesmo
+        event: prev.event?._id === id ? { ...prev.event, ...result.event } : prev.event
       }));
       return result;
     } catch (error) {
