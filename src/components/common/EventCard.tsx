@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Card, 
   CardContent, 
@@ -51,6 +51,7 @@ const EventCard: React.FC<EventCardProps> = ({
   const navigate = useNavigate();
   const [openCancelDialog, setOpenCancelDialog] = useState(false);
   const [openCancelParticipationDialog, setOpenCancelParticipationDialog] = useState(false);
+  const descriptionRef = useRef<HTMLDivElement>(null);
 
   // Handlers for cancel event dialog
   const handleOpenCancelDialog = () => {
@@ -178,15 +179,26 @@ const EventCard: React.FC<EventCardProps> = ({
             }}
           />
         </Box>
-        <Typography variant="body2" color="text.secondary" paragraph sx={{ 
-          mb: 2,
-          display: '-webkit-box',
-          WebkitLineClamp: 3,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden'
-        }}>
-          {event.description}
-        </Typography>
+        
+        {/* Descrição do evento com limite de 2 linhas e efeito de fade */}
+        <Box sx={{ position: 'relative', mb: 2, height: '3em' }}>
+          <Typography 
+            variant="body2" 
+            color="text.secondary" 
+            sx={{ 
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              lineHeight: '1.5em',
+              height: '3em',
+              mb: 0
+            }}
+            ref={descriptionRef}
+          >
+            {event.description}
+          </Typography>
+        </Box>
 
         <Divider sx={{ mb: 2 }} />
         

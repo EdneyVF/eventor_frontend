@@ -16,6 +16,8 @@ const EVENT_ROUTES = {
   cancelParticipation: (id: string) => `/api/events/${id}/participate`,
   approvalStatus: (id: string) => `/api/events/${id}/approval-status`,
   adminAll: '/api/events/admin/all',
+  activate: (id: string) => `/api/events/${id}/activate`,
+  deactivate: (id: string) => `/api/events/${id}/deactivate`,
 };
 
 // Interfaces
@@ -305,5 +307,25 @@ export interface AdminEventsResponse {
 // Buscar todos eventos (admin)
 export const getAllEventsAdmin = async (params: EventQueryParams = {}) => {
   const response = await api.get<AdminEventsResponse>(EVENT_ROUTES.adminAll, { params });
+  return response.data;
+};
+
+// Ativar um evento (apenas para admin)
+export const activateEvent = async (id: string) => {
+  const response = await api.put<{
+    success: boolean;
+    message: string;
+    event: Event;
+  }>(EVENT_ROUTES.activate(id));
+  return response.data;
+};
+
+// Inativar um evento (apenas para admin)
+export const deactivateEvent = async (id: string) => {
+  const response = await api.put<{
+    success: boolean;
+    message: string;
+    event: Event;
+  }>(EVENT_ROUTES.deactivate(id));
   return response.data;
 }; 

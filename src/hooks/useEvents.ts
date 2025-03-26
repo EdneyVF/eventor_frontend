@@ -10,6 +10,9 @@ import {
   deleteEvent as apiDeleteEvent,
   approveEvent as apiApproveEvent,
   rejectEvent as apiRejectEvent,
+  activateEvent as apiActivateEvent,
+  deactivateEvent as apiDeactivateEvent,
+  getApprovalStatus as apiGetApprovalStatus,
   listPendingEvents,
   getEventById,
   getAllEventsAdmin
@@ -36,6 +39,14 @@ interface UseEventsState {
     approved: number;
     rejected: number;
   };
+  approvalInfo: {
+    approvalStatus: 'pending' | 'approved' | 'rejected';
+    approvedBy?: {
+      name: string;
+    };
+    approvalDate?: Date;
+    rejectionReason?: string;
+  } | null;
 }
 
 export interface ApiError {
@@ -64,7 +75,8 @@ export const useEvents = () => {
       pending: 0,
       approved: 0,
       rejected: 0
-    }
+    },
+    approvalInfo: null
   });
 
   // Buscar lista de eventos
@@ -296,6 +308,93 @@ export const useEvents = () => {
     }
   }, []);
 
+  // Ativar evento
+  const handleActivateEvent = useCallback(async (id: string) => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    try {
+      const result = await apiActivateEvent(id);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        success: true,
+        // Atualizar o status do evento na lista
+        events: prev.events.map(e => 
+          e._id === id ? { ...e, status: 'active' } : e
+        ),
+        event: prev.event?._id === id 
+          ? { ...prev.event, status: 'active' } 
+          : prev.event
+      }));
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 
+        (err as ApiError)?.message || 'Erro ao ativar evento';
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: errorMessage,
+        success: false
+      }));
+      throw err;
+    }
+  }, []);
+
+  // Inativar evento
+  const handleDeactivateEvent = useCallback(async (id: string) => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    try {
+      const result = await apiDeactivateEvent(id);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        success: true,
+        // Atualizar o status do evento na lista
+        events: prev.events.map(e => 
+          e._id === id ? { ...e, status: 'inactive' } : e
+        ),
+        event: prev.event?._id === id 
+          ? { ...prev.event, status: 'inactive' } 
+          : prev.event
+      }));
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 
+        (err as ApiError)?.message || 'Erro ao inativar evento';
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: errorMessage,
+        success: false
+      }));
+      throw err;
+    }
+  }, []);
+
+  // Buscar detalhes do status de aprovação (incluindo justificativa de rejeição)
+  const fetchApprovalStatus = useCallback(async (id: string) => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    try {
+      const result = await apiGetApprovalStatus(id);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        success: true,
+        approvalInfo: result.data
+      }));
+      return result.data;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 
+        (err as ApiError)?.message || 'Erro ao obter informações de aprovação';
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: errorMessage,
+        success: false
+      }));
+      throw err;
+    }
+  }, []);
+
   // Buscar eventos criados pelo usuário
   const fetchMyEvents = useCallback(async (params: EventQueryParams = {}) => {
     try {
@@ -469,7 +568,8 @@ export const useEvents = () => {
         pending: 0,
         approved: 0,
         rejected: 0
-      }
+      },
+      approvalInfo: null
     });
   }, []);
 
@@ -524,6 +624,9 @@ export const useEvents = () => {
     participateInEvent,
     cancelEventParticipation,
     cancelEvent,
+    activateEvent: handleActivateEvent,
+    deactivateEvent: handleDeactivateEvent,
+    fetchApprovalStatus,
     clearState,
     clearError
   };

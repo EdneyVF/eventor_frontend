@@ -60,6 +60,8 @@ const AdminDashboardPage: React.FC = () => {
     approveEvent, 
     rejectEvent, 
     deleteEvent,
+    activateEvent,
+    deactivateEvent,
     counts 
   } = useEvents();
   
@@ -253,6 +255,64 @@ const AdminDashboardPage: React.FC = () => {
       setSnackbar({
         open: true,
         message: err instanceof Error ? err.message : 'Erro ao excluir evento',
+        severity: 'error'
+      });
+    }
+  };
+
+  // Ativar evento
+  const handleActivateEvent = async () => {
+    if (!selectedEventId) return;
+    
+    try {
+      await activateEvent(selectedEventId);
+      handleMenuClose();
+      setSnackbar({
+        open: true,
+        message: 'Evento ativado com sucesso!',
+        severity: 'success'
+      });
+      // Recarregar eventos
+      fetchAllEvents({
+        page: page + 1,
+        limit: rowsPerPage,
+        search: searchQuery,
+        status: filterStatus !== 'all' ? filterStatus : undefined,
+        approvalStatus: filterApproval !== 'all' ? filterApproval : undefined
+      });
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: err instanceof Error ? err.message : 'Erro ao ativar evento',
+        severity: 'error'
+      });
+    }
+  };
+
+  // Inativar evento
+  const handleDeactivateEvent = async () => {
+    if (!selectedEventId) return;
+    
+    try {
+      await deactivateEvent(selectedEventId);
+      handleMenuClose();
+      setSnackbar({
+        open: true,
+        message: 'Evento inativado com sucesso!',
+        severity: 'success'
+      });
+      // Recarregar eventos
+      fetchAllEvents({
+        page: page + 1,
+        limit: rowsPerPage,
+        search: searchQuery,
+        status: filterStatus !== 'all' ? filterStatus : undefined,
+        approvalStatus: filterApproval !== 'all' ? filterApproval : undefined
+      });
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: err instanceof Error ? err.message : 'Erro ao inativar evento',
         severity: 'error'
       });
     }
@@ -537,6 +597,23 @@ const AdminDashboardPage: React.FC = () => {
                   Rejeitar
                 </MenuItem>
               </>
+            )}
+            
+            {/* Opção para Ativar - apenas se o evento estiver inativo e aprovado */}
+            {events.find(e => e._id === selectedEventId)?.status === 'inactive' && 
+             events.find(e => e._id === selectedEventId)?.approvalStatus === 'approved' && (
+              <MenuItem onClick={handleActivateEvent}>
+                <CheckIcon fontSize="small" sx={{ mr: 1 }} color="success" />
+                Ativar
+              </MenuItem>
+            )}
+            
+            {/* Opção para Inativar - apenas se o evento estiver ativo */}
+            {events.find(e => e._id === selectedEventId)?.status === 'active' && (
+              <MenuItem onClick={handleDeactivateEvent}>
+                <CloseIcon fontSize="small" sx={{ mr: 1 }} color="warning" />
+                Inativar
+              </MenuItem>
             )}
             
             <MenuItem onClick={handleDeleteEvent} sx={{ color: 'error.main' }}>

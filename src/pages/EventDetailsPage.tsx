@@ -15,6 +15,7 @@ import {
   ListItemText,
   CircularProgress,
   Alert,
+  AlertTitle,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -59,7 +60,9 @@ const EventDetailsPage: React.FC = () => {
     fetchEventById,
     participateInEvent,
     cancelEventParticipation,
-    cancelEvent
+    cancelEvent,
+    fetchApprovalStatus,
+    approvalInfo
   } = useEvents();
 
   // Estados para diálogos e mensagens
@@ -89,6 +92,15 @@ const EventDetailsPage: React.FC = () => {
       });
     }
   }, [id, fetchEventById]);
+
+  // Buscar informações de aprovação quando o evento for rejeitado
+  useEffect(() => {
+    if (event && event.approvalStatus === 'rejected' && id) {
+      fetchApprovalStatus(id).catch(err => {
+        console.error('Erro ao buscar informações de aprovação:', err);
+      });
+    }
+  }, [event, id, fetchApprovalStatus]);
 
   // Formatar data para exibição
   const formatDate = (dateString: string) => {
@@ -277,6 +289,14 @@ const EventDetailsPage: React.FC = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
+      {/* Alerta para evento rejeitado (apenas para o organizador) */}
+      {event.approvalStatus === 'rejected' && isOrganizer && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          <AlertTitle>Evento Rejeitado</AlertTitle>
+          Este evento foi rejeitado por um administrador. Verifique e faça as alterações necessárias antes de tentar novamente.
+        </Alert>
+      )}
+      
       {/* Imagem do evento */}
       <Paper sx={{ mb: 3, overflow: 'hidden' }}>
         <Box sx={{ position: 'relative', height: 400 }}>
@@ -469,6 +489,45 @@ const EventDetailsPage: React.FC = () => {
               </List>
 
               <Divider sx={{ my: 2 }} />
+
+              {/* Status de aprovação para eventos rejeitados */}
+              {event.approvalStatus === 'rejected' && (
+                <>
+                  <Box sx={{ p: 2, mb: 2, borderRadius: 1, border: '1px solid', borderColor: 'error.main'}}>
+                    <Typography variant="h6" fontWeight="bold" color="error.dark">
+                      Status: Rejeitado
+                    </Typography>
+                    {isOrganizer && (
+                      <>
+                      <Typography variant="subtitle1" gutterBottom fontWeight="bold" color="error.dark">
+                        Motivo da Rejeição
+                      </Typography>
+                      <Typography variant="body1" color="error.dark">
+                        {approvalInfo?.rejectionReason || 'Nenhuma justificativa fornecida.'}
+                      </Typography>
+                      </>
+                    )}
+                  </Box>
+                  <Divider sx={{ mt: 2 }} />
+                  <Box sx={{ mt: 0, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+                    <Typography variant="subtitle1" mb={1} color="error.dark">
+                      Você precisa editar e reenviar este evento para aprovação.
+                    </Typography>
+                    <Typography variant="subtitle1" fontWeight="medium">
+                      Como proceder:
+                    </Typography>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      1. Edite seu evento seguindo as orientações fornecidas no motivo da rejeição.
+                    </Typography>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      2. Ao salvar as alterações, seu evento será automaticamente reenviado para aprovação.
+                    </Typography>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      3. Um administrador revisará as alterações e aprovará ou rejeitará novamente seu evento.
+                    </Typography>
+                  </Box>
+                </>
+              )}
 
               {event.status !== 'canceled' && (
                 <Box sx={{ mt: 2 }}>
