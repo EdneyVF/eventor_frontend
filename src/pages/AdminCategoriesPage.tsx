@@ -25,7 +25,8 @@ import {
   Alert,
   CircularProgress,
   FormControlLabel,
-  Switch
+  Switch,
+  Tooltip
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -40,6 +41,12 @@ import { useAuth } from '../hooks/useAuth';
 import { useCategories } from '../hooks/useCategories';
 import { CategoryCreateData, CategoryUpdateData } from '../services/categoryService';
 import AdminNavigation from '../components/admin/AdminNavigation';
+
+// Utility function to truncate text
+const truncateText = (text: string | undefined, maxLength: number): string => {
+  if (!text) return '-';
+  return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+};
 
 const AdminCategoriesPage: React.FC = () => {
   const { authState } = useAuth();
@@ -595,7 +602,13 @@ const AdminCategoriesPage: React.FC = () => {
                   filteredCategories.map((category) => (
                     <TableRow key={category._id} hover>
                       <TableCell>{category.name}</TableCell>
-                      <TableCell>{category.description || '-'}</TableCell>
+                      <TableCell>
+                        <Tooltip title={category.description || '-'} placement="top">
+                          <Box component="span" sx={{ cursor: 'help' }}>
+                            {truncateText(category.description, 75)}
+                          </Box>
+                        </Tooltip>
+                      </TableCell>
                       <TableCell>{renderStatusChip(category.active)}</TableCell>
                       <TableCell>
                         <IconButton 
